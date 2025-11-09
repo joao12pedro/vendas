@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Criar Conta</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .register-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      width: 300px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+
+    .success {
+      color: green;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <h2>Criar Conta</h2>
+    <input type="text" id="nome" placeholder="Nome" />
+    <select id="perfil">
+      <option value="">Selecione o perfil</option>
+      <option value="administrador">Administrador</option>
+      <option value="cliente">Cliente</option>
+      <option value="atendente">Atendente</option>
+    </select>
+    <input type="text" id="username" placeholder="Usuário" />
+    <input type="password" id="password" placeholder="Senha" />
+    <button onclick="criarConta()">Cadastrar</button>
+    <div id="mensagem"></div>
+  </div>
+
+  <script>
+    function criarConta() {
+      const nome = document.getElementById("nome").value.trim();
+      const perfil = document.getElementById("perfil").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const mensagem = document.getElementById("mensagem");
+
+      if (!nome || !perfil || !username || !password) {
+        mensagem.textContent = "Todos os campos são obrigatórios.";
+        mensagem.className = "error";
+        return;
+      }
+
+      fetch("http://127.0.0.1:5000/verifica_usuario", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          nome,
+          perfil,
+          username,  // <- agora enviando sempre "username"
+          password
+        })
+      })
+      .then(response => response.json().then(data => ({status: response.status, data})))
+      .then(({status, data}) => {
+        if (status === 201) {
+          mensagem.textContent = data.mensagem || "Conta criada com sucesso!";
+          mensagem.className = "success";
+          setTimeout(() => {
+            window.location.href = "index.html"; // Redireciona para login
+          }, 2000);
+        } else {
+          mensagem.textContent = data.mensagem || data.erro || "Erro ao criar conta.";
+          mensagem.className = "error";
+        }
+      })
+      .catch(err => {
+        mensagem.textContent = "Erro de conexão com o servidor.";
+        mensagem.className = "error";
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>
