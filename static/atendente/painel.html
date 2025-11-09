@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel - Pedidos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+
+    .search-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      width: 400px;
+      margin: auto;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #007BFF;
+      color: white;
+    }
+
+    #mensagem {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .erro {
+      color: red;
+    }
+
+    .sucesso {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <!-- Buscar pedidos -->
+  <div class="search-box">
+    <h2>Buscar Pedido</h2>
+    <input type="text" id="nome" placeholder="Digite o nome do cliente" />
+    <button onclick="buscarPedido()">Pesquisar</button>
+    <div id="mensagem"></div>
+  </div>
+
+  <!-- Deletar pedidos por intervalo -->
+  <div class="search-box">
+    <h2>Deletar Pedidos por Período</h2>
+    <label for="data_inicio">Data Início:</label>
+    <input type="date" id="data_inicio" />
+    <label for="data_fim">Data Fim:</label>
+    <input type="date" id="data_fim" />
+    <button onclick="deletarPedidosPorData()">Deletar</button>
+  </div>
+
+  <div id="resultado">
+    <!-- Tabela será carregada aqui via JavaScript -->
+  </div>
+
+  <script>
+    function capitalizeNome(nome) {
+      if (!nome) return "";
+      return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+    }
+
+    function formatarValor(valor) {
+      if (valor === null || valor === undefined) return "0.00";
+      return parseFloat(valor).toFixed(2);
+    }
+
+    function criarTabelaPedidos(pedidos) {
+  if (!pedidos || pedidos.length === 0) {
+    return "<p>Nenhum pedido encontrado.</p>";
+  }
+
+  let html = `
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Nome Cliente</th>
+        <th>Valor Total</th>
+        <th>Data do Pedido</th>
+      </tr>
+  `;
+
+  pedidos.forEach(pedido => {
+    // Formata data (ex: 2025-10-13 → 13/10/2025)
+    const dataFormatada = pedido.data_pedido
+      ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
+      : "-";
+
+    html += `
+      <tr>
+        <td>${pedido.id || "-"}</td>
+        <td>${pedido.nome_cliente || "-"}</td>
+        <td>R$ ${formatarValor(pedido.valor_total)}</td>
+        <td>${dataFormatada}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table>`;
+  return html;
+}
+
+    async function carregarTodosPedidos() {
+      const mensagem = document.getElementById("mensagem");
+      const resultadoDiv = document.getElementById("resultado");
+
+      mensagem.textContent = "Carregando pedidos...";
+      mensagem.className = "";
+
+      try {
+        const res = await fetch("/pedido");
+
+        if (!res.ok) throw new Error("Erro ao carregar pedidos");
+
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          mensagem.textContent = "Nenhum pedido encontrado.";
+          mensagem.className = "erro";
+          resultadoDiv.innerHTML = "";
+        } else {
+          mensagem.textContent = `${data.length} pedido(s) encontrado(s).`;
+          mensagem.className = "sucesso";
+          resultadoDiv.innerHTML = criarTabelaPedidos(data);
+        }
+      } catch (err) {
+        mensagem.textContent = "Erro ao carregar pedidos.";
+        mensagem.className = "erro";
+        resultadoDiv.innerHTML = "";
+        console.error(err);
+      }
+    }
+
+    async function buscarPedido() {
+      let nome = document.getElementById("nome").value.trim();
+      const mensagem = document.getElementById("mensagem");
+      const resultadoDiv = document.getElementById("resultado");
+
+      if (!nome) {
+        carregarTodosPedidos();
+        return;
+      }
+
+      nome = capitalizeNome(nome);
+
+      mensagem.textContent = "Pesquisando...";
+      mensagem.className = "";
+      resultadoDiv.innerHTML = "";
+
+      try {
+        const res = await fetch(`/pedido/${encodeURIComponent(nome)}`);
+
+        if (res.status === 404) {
+          mensagem.textContent = "Pedido não encontrado.";
+          mensagem.className = "erro";
+          resultadoDiv.innerHTML = "";
+          return;
+        }
+
+        if (!res.ok) throw new Error("Erro na resposta da API");
+
+        const data = await res.json();
+
+        if (data.erro) {
+          mensagem.textContent = data.erro;
+          mensagem.className = "erro";
+          resultadoDiv.innerHTML = "";
+        } else {
+          mensagem.textContent = "Pedido encontrado!";
+          mensagem.className = "sucesso";
+          resultadoDiv.innerHTML = criarTabelaPedidos([data]);
+        }
+      } catch (err) {
+        mensagem.textContent = "Erro ao buscar pedido.";
+        mensagem.className = "erro";
+        resultadoDiv.innerHTML = "";
+        console.error(err);
+      }
+    }
+
+    // NOVA FUNÇÃO -> Deletar pedidos por data
+    async function deletarPedidosPorData() {
+      const dataInicio = document.getElementById("data_inicio").value;
+      const dataFim = document.getElementById("data_fim").value;
+      const mensagem = document.getElementById("mensagem");
+
+      if (!dataInicio || !dataFim) {
+        mensagem.textContent = "Preencha as duas datas.";
+        mensagem.className = "erro";
+        return;
+      }
+
+      mensagem.textContent = "Deletando pedidos...";
+      mensagem.className = "";
+
+      try {
+        const res = await fetch("/deletar_pedidos_por_data", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data_inicio: dataInicio, data_fim: dataFim })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          mensagem.textContent = data.mensagem;
+          mensagem.className = "sucesso";
+          carregarTodosPedidos(); // Atualiza lista após deletar
+        } else {
+          mensagem.textContent = data.mensagem || data.erro || "Erro ao deletar.";
+          mensagem.className = "erro";
+        }
+      } catch (err) {
+        mensagem.textContent = "Erro ao deletar pedidos.";
+        mensagem.className = "erro";
+        console.error(err);
+      }
+    }
+
+    window.onload = carregarTodosPedidos;
+  </script>
+</body>
+</html>
