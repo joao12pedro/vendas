@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard de Produtos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 40px;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card, .card-dia {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            width: 200px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .card h3, .card-dia h4 {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .card button, .card-dia button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .card button {
+            background: #007bff;
+        }
+
+        .card button:hover {
+            background: #0056b3;
+        }
+
+        .card-dia button {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .card-dia button:hover {
+            background: #e0a800;
+        }
+
+        .btn-remover {
+            background: #dc3545 !important;
+        }
+
+        .btn-remover:hover {
+            background: #c82333 !important;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        form input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            background: #28a745;
+            color: white;
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        form button:hover {
+            background: #218838;
+        }
+
+        .preco {
+            font-weight: bold;
+            color: #28a745;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard de Produtos</h1>
+
+    <form id="form-produto">
+        <h2>Adicionar Novo Produto</h2>
+        <input type="text" name="nome" placeholder="Nome do produto" required>
+        <input type="number" name="preco" step="0.01" min="0" placeholder="Preço" required>
+        <button type="submit">Adicionar Produto</button>
+    </form>
+
+    <h2>Produtos Disponíveis</h2>
+    <div class="container" id="produtos-container"></div>
+
+    <h2>Produtos do Dia</h2>
+    <div class="container" id="produtos-dia-container"></div>
+
+    <script>
+        // Função para formatar o preço como moeda
+        function formatarPreco(valor) {
+            const num = parseFloat(valor);
+            if (isNaN(num)) return "R$ 0,00";
+
+            return num.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
+
+        // Carrega todos os produtos disponíveis
+        async function carregarProdutos() {
+            try {
+                const resposta = await fetch("/produto");
+                if (!resposta.ok) throw new Error("Erro ao carregar produtos");
+
+                const produtos = await resposta.json();
+                const container = document.getElementById("produtos-container");
+                container.innerHTML = "";
+
+                produtos.forEach(produto => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+
+                    card.innerHTML = `
+                        <h3>${produto.nome}</h3>
+                        <div class="preco">${formatarPreco(produto.preco)}</div>
+                        <button onclick="adicionarAoDia(${produto.id})">Adicionar ao Dia</button>
+                        <button class="btn-remover" onclick="removerProduto(${produto.id})">Remover Produto</button>
+                    `;
+
+                    container.appendChild(card);
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar produtos:", erro);
+                alert("Erro ao carregar produtos: " + erro.message);
+            }
+        }
+
+        // Carrega os produtos do dia
+        async function carregarProdutosDoDia() {
+            try {
+                const resposta = await fetch("/produto_dia");
+                if (!resposta.ok) throw new Error("Erro ao carregar produtos do dia");
+
+                const produtosDia = await resposta.json();
+                const container = document.getElementById("produtos-dia-container");
+                container.innerHTML = "";
+
+                produtosDia.forEach(produto => {
+                    const card = document.createElement("div");
+                    card.className = "card-dia";
+
+                    card.innerHTML = `
+                        <h4>${produto.nome}</h4>
+                        <div class="preco">${formatarPreco(produto.preco)}</div>
+                        <button onclick="removerDoDia(${produto.id})">Remover do Dia</button>
+                    `;
+
+                    container.appendChild(card);
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar produtos do dia:", erro);
+                alert("Erro ao carregar produtos do dia: " + erro.message);
+            }
+        }
+
+        // Adiciona um produto à lista do dia
+        async function adicionarAoDia(produtoId) {
+            try {
+                const resposta = await fetch("/produto_dia", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ produto_id: produtoId })
+                });
+
+                if (!resposta.ok) {
+                    const erro = await resposta.json();
+                    throw new Error(erro.erro || "Erro ao adicionar produto ao dia");
+                }
+
+                alert("Produto adicionado ao dia com sucesso!");
+                carregarProdutosDoDia();
+            } catch (erro) {
+                console.error("Erro ao adicionar produto ao dia:", erro);
+                alert(erro.message);
+            }
+        }
+
+        // Remove um produto da lista geral
+        async function removerProduto(produtoId) {
+            if (!confirm("Tem certeza que deseja remover este produto permanentemente?")) return;
+
+            try {
+                const resposta = await fetch(`/produto/${produtoId}`, {
+                    method: "DELETE"
+                });
+
+                if (!resposta.ok) {
+                    const erro = await resposta.json();
+                    throw new Error(erro.erro || "Erro ao remover produto");
+                }
+
+                alert("Produto removido com sucesso!");
+                carregarProdutos();
+                carregarProdutosDoDia();
+            } catch (erro) {
+                console.error("Erro ao remover produto:", erro);
+                alert(erro.message);
+            }
+        }
+
+        // Remove um produto da lista do dia
+        async function removerDoDia(produtoId) {
+            if (!confirm("Remover este produto da lista do dia?")) return;
+
+            try {
+                const resposta = await fetch(`/produto_dia/${produtoId}`, {
+                    method: "DELETE"
+                });
+
+                if (!resposta.ok) {
+                    const erro = await resposta.json();
+                    throw new Error(erro.erro || "Erro ao remover produto do dia");
+                }
+
+                alert("Produto removido do dia com sucesso!");
+                carregarProdutosDoDia();
+            } catch (erro) {
+                console.error("Erro ao remover produto do dia:", erro);
+                alert(erro.message);
+            }
+        }
+
+        // Adiciona um novo produto
+        document.getElementById("form-produto").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+            const nome = form.nome.value.trim();
+            const preco = form.preco.value;
+
+            if (!nome || !preco) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append("nome", nome);
+                formData.append("preco", preco);
+
+                const resposta = await fetch("/produto", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!resposta.ok) {
+                    const erro = await resposta.json();
+                    throw new Error(erro.erro || "Erro ao adicionar produto");
+                }
+
+                alert("Produto adicionado com sucesso!");
+                form.reset();
+                carregarProdutos();
+            } catch (erro) {
+                console.error("Erro ao adicionar produto:", erro);
+                alert(erro.message);
+            }
+        });
+
+        // Carrega os dados ao iniciar
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarProdutos();
+            carregarProdutosDoDia();
+        });
+    </script>
+</body>
+</html>
