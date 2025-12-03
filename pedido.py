@@ -45,28 +45,18 @@ def obter_pedido_por_id(id):
 
 @pedido_bp.route("/pedido", methods=["POST"])
 def criar_pedido():
-    """
-    Rota para criar um novo pedido na tabela pedido
-    Estrutura do JSON esperado:
-    {
-        "nome_cliente": "João da Silva"
-    }
-    """
     data = request.get_json()
 
-    # Validação dos campos obrigatórios
     if not data or 'nome_cliente' not in data:
         return jsonify({"erro": "O nome do cliente é obrigatório"}), 400
 
-    # Valores padrão
     valor_total = 0.00
     nome_cliente = data['nome_cliente']
-    data_pedido = datetime.now().strftime('%Y-%m-%d')  # Formato date para o banco
+    data_pedido = datetime.now().strftime('%Y-%m-%d')
 
     supabase = connect_db()
 
     try:
-        # Insere o pedido na tabela (SEM a coluna status)
         resposta = supabase.table('pedido').insert({
             'valor_total': valor_total,
             'nome_cliente': nome_cliente,
@@ -87,24 +77,21 @@ def criar_pedido():
 def adicionar_item_pedido():
     data = request.get_json()
 
-    # Validação dos campos obrigatórios
     required_fields = ['pedido_id', 'nome_produto']
     if not all(field in data for field in required_fields):
         return jsonify({"erro": "pedido_id e nome_produto são obrigatórios"}), 400
 
     pedido_id = data['pedido_id']
     nome_produto = data['nome_produto']
-    quantidade = data.get('quantidade', 1)  # Default 1 se não informado
+    quantidade = data.get('quantidade', 1)
 
     supabase = connect_db()
 
     try:
-        # 1. Verifica se pedido existe
         pedido = supabase.table('pedido').select('id, valor_total').eq('id', pedido_id).execute()
         if not pedido.data:
             return jsonify({"erro": f"Pedido {pedido_id} não encontrado"}), 404
 
-        # 2. Busca produto pelo nome na tabela produto_dia
         produto = supabase.table('produto_dia').select('id, preco, nome').ilike('nome', f'%{nome_produto}%').execute()
         if not produto.data:
             return jsonify({"erro": f"Produto '{nome_produto}' não encontrado"}), 404
@@ -112,7 +99,6 @@ def adicionar_item_pedido():
         produto_id = produto.data[0]['id']
         preco_unitario = produto.data[0]['preco']
 
-        # 3. Insere na tabela itens_pedido
         novo_item = {
             'pedido_id': pedido_id,
             'produto_id': produto_id,
@@ -122,7 +108,6 @@ def adicionar_item_pedido():
 
         resposta = supabase.table('itens_pedido').insert(novo_item).execute()
 
-        # 4. Atualiza valor total do pedido
         subtotal = preco_unitario * quantidade
         novo_total = pedido.data[0].get('valor_total', 0) + subtotal
 
@@ -137,7 +122,6 @@ def adicionar_item_pedido():
         }), 201
 
     except Exception as e:
-        # Trata caso de item duplicado (se houver constraint)
         if 'duplicate key' in str(e).lower():
             return jsonify({"erro": "Este produto já foi adicionado ao pedido"}), 409
         return jsonify({"erro": str(e)}), 500
@@ -148,12 +132,10 @@ def atualizar_pedido(pedido_id):
     try:
         data = request.get_json()
 
-        # Verificar se o pedido existe
         pedido = connect_db().table('pedido').select('*').eq('id', pedido_id).execute()
         if len(pedido.data) == 0:
             return jsonify({'erro': 'Pedido não encontrado'}), 404
 
-        # Campos permitidos para atualização (SEM status)
         campos_permitidos = ['valor_total', 'nome_cliente']
         dados_atualizacao = {}
 
@@ -164,7 +146,6 @@ def atualizar_pedido(pedido_id):
         if not dados_atualizacao:
             return jsonify({'erro': 'Nenhum campo válido para atualização'}), 400
 
-        # Atualiza o pedido
         supabase = connect_db()
         resposta = supabase.table("pedido").update(dados_atualizacao).eq("id", pedido_id).execute()
 
@@ -179,18 +160,13 @@ def atualizar_pedido(pedido_id):
 
 @pedido_bp.route("/finalizar_pedido/<int:pedido_id>", methods=['PUT'])
 def finalizar_pedido(pedido_id):
-    """
-    Rota para finalizar um pedido, atualizando apenas o valor total
-    """
     try:
         supabase = connect_db()
 
-        # Verifica se o pedido existe
         pedido = supabase.table('pedido').select('*').eq('id', pedido_id).execute()
         if not pedido.data:
             return jsonify({'erro': 'Pedido não encontrado'}), 404
 
-        # Atualiza apenas o valor total (SEM status)
         resposta = supabase.table("pedido").update({
             'valor_total': request.get_json().get('valor_total', 0)
         }).eq("id", pedido_id).execute()
@@ -209,15 +185,12 @@ def excluir_pedido(id):
     try:
         supabase = connect_db()
 
-        # Verifica se o pedido existe
         pedido = supabase.table("pedido").select("*").eq("id", id).execute()
         if not pedido.data:
             return jsonify({"erro": "Pedido não encontrado"}), 404
 
-        # Deleta os itens do pedido primeiro
         supabase.table("itens_pedido").delete().eq("pedido_id", id).execute()
 
-        # Deleta o pedido
         supabase.table("pedido").delete().eq("id", id).execute()
 
         return jsonify({"mensagem": "Pedido excluído com sucesso!"}), 200
@@ -238,7 +211,6 @@ def deletar_pedidos_por_data():
     supabase = connect_db()
 
     try:
-        # 1️⃣ Buscar pedidos que estão dentro do período
         pedidos = (
             supabase.table("pedido")
             .select("id")
@@ -250,11 +222,9 @@ def deletar_pedidos_por_data():
         if not pedidos:
             return jsonify({"mensagem": "Nenhum pedido encontrado no intervalo informado"}), 404
 
-        # 2️⃣ Deletar os itens ligados a esses pedidos
         ids_pedidos = [p["id"] for p in pedidos]
         supabase.table("itens_pedido").delete().in_("pedido_id", ids_pedidos).execute()
 
-        # 3️⃣ Agora sim, deletar os pedidos
         resposta = (
             supabase.table("pedido")
             .delete()
@@ -270,3 +240,90 @@ def deletar_pedidos_por_data():
     except Exception as e:
         print("Erro ao deletar pedidos por data:", e)
         return jsonify({"erro": str(e)}), 500
+
+
+# -------------------------------------------------------------
+# 🔥 ROTAS ADICIONADAS: pedidos_finalizados
+# -------------------------------------------------------------
+
+@pedido_bp.route("/pedidos_finalizados", methods=["GET"])
+def listar_pedidos_finalizados():
+    return jsonify(get("pedidos_finalizados"))
+
+@pedido_bp.route("/pedidos_finalizados/<string:nome_cliente>", methods=["GET"])
+def obter_pedido_finalizado_por_nome(nome_cliente):
+    """
+    Busca pedidos finalizados pelo nome do cliente
+    """
+    supabase = connect_db()
+
+    try:
+        resposta = (
+            supabase
+            .table("pedidos_finalizados")
+            .select("*")
+            .ilike("nome_cliente", f"%{nome_cliente}%")  # busca parcial
+            .execute()
+        )
+
+        if resposta.data:
+            return jsonify(resposta.data), 200
+        else:
+            return jsonify({"erro": "Nenhum pedido encontrado para esse nome"}), 404
+
+    except Exception as e:
+        print("Erro ao buscar por nome:", e)
+        return jsonify({"erro": str(e)}), 500
+
+
+@pedido_bp.route("/pedidos_finalizados/<int:id>", methods=["GET"])
+def obter_pedido_finalizado_por_id(nome):
+    return obter_pedido_finalizado_por_nome(nome)
+
+
+@pedido_bp.route("/pedidos_finalizados", methods=["POST"])
+def criar_pedido_finalizado():
+    data = request.get_json()
+
+    campos_obrigatorios = ["valor_total", "nome_cliente", "data_pedido"]
+    if not all(campo in data for campo in campos_obrigatorios):
+        return jsonify({"erro": "valor_total, nome_cliente e data_pedido são obrigatórios"}), 400
+
+    valor_total = data["valor_total"]
+    nome_cliente = data["nome_cliente"]
+    data_pedido = data["data_pedido"]
+
+    supabase = connect_db()
+
+    try:
+        resposta = supabase.table("pedidos_finalizados").insert({
+            "valor_total": valor_total,
+            "nome_cliente": nome_cliente,
+            "data_pedido": data_pedido
+        }).execute()
+
+        return jsonify({
+            "mensagem": "Pedido finalizado criado com sucesso",
+            "dados": resposta.data[0] if resposta.data else None
+        }), 201
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
+@pedido_bp.route("/pedidos_finalizados/<int:id>", methods=["DELETE"])
+def excluir_pedido_finalizado(id):
+    try:
+        supabase = connect_db()
+
+        registro = supabase.table("pedidos_finalizados").select("*").eq("id", id).execute()
+        if not registro.data:
+            return jsonify({"erro": "Pedido finalizado não encontrado"}), 404
+
+        supabase.table("pedidos_finalizados").delete().execute()
+
+        return jsonify({"mensagem": "Pedido finalizado excluído com sucesso!"}), 200
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
