@@ -1,262 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Painel - Pedidos</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel de Pedidos</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 20px;
-    }
-
-    .search-box {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-      width: 400px;
-      margin: auto;
-      margin-bottom: 20px;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-    }
-
-    button {
-      background: #007BFF;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    table {
-      width: 80%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      background: white;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-
-    th {
-      background: #007BFF;
-      color: white;
-    }
-
-    #mensagem {
-      text-align: center;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .erro {
-      color: red;
-    }
-
-    .sucesso {
-      color: green;
-    }
+    body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
+    h1 { text-align:center; margin-bottom:10px; }
+    .tabs { display:flex; gap:10px; justify-content:center; margin-bottom:18px; }
+    .tab { padding:8px 14px; cursor:pointer; border-radius:6px; background:#e0e0e0; }
+    .tab.active { background:#1976d2; color:#fff; }
+    .container { max-width:1000px; margin:0 auto; }
+    table { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+    th, td { padding:10px; border:1px solid #e8e8e8; text-align:left; }
+    th { background:#fafafa; }
+    .actions { display:flex; gap:8px; }
+    .btn { padding:6px 10px; border:none; border-radius:5px; cursor:pointer; }
+    .btn-del{ background:#d32f2f; color:#fff; }
+    .btn-fin{ background:#2e7d32; color:#fff; }
+    #mensagem { text-align:center; margin:12px 0; font-weight:600; }
+    .erro { color:#d32f2f; }
+    .sucesso { color:#2e7d32; }
+    .small { font-size:0.9rem; color:#666; }
   </style>
 </head>
 <body>
-  <!-- Buscar pedidos -->
-  <div class="search-box">
-    <h2>Buscar Pedido</h2>
-    <input type="text" id="nome" placeholder="Digite o nome do cliente" />
-    <button onclick="buscarPedido()">Pesquisar</button>
-    <div id="mensagem"></div>
+
+<div class="container">
+  <h1>Painel de Pedidos</h1>
+
+  <div class="tabs">
+    <div id="tab-abertos" class="tab active" onclick="abrirAba('abertos')">Pedidos Abertos</div>
+    <div id="tab-finalizados" class="tab" onclick="abrirAba('finalizados')">Pedidos Finalizados</div>
   </div>
 
-  <!-- Deletar pedidos por intervalo -->
-  <div class="search-box">
-    <h2>Deletar Pedidos por Período</h2>
-    <label for="data_inicio">Data Início:</label>
-    <input type="date" id="data_inicio" />
-    <label for="data_fim">Data Fim:</label>
-    <input type="date" id="data_fim" />
-    <button onclick="deletarPedidosPorData()">Deletar</button>
-  </div>
+  <div id="mensagem" class="small"></div>
 
-  <div id="resultado">
-    <!-- Tabela será carregada aqui via JavaScript -->
-  </div>
-
-  <script>
-    function capitalizeNome(nome) {
-      if (!nome) return "";
-      return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
-    }
-
-    function formatarValor(valor) {
-      if (valor === null || valor === undefined) return "0.00";
-      return parseFloat(valor).toFixed(2);
-    }
-
-    function criarTabelaPedidos(pedidos) {
-  if (!pedidos || pedidos.length === 0) {
-    return "<p>Nenhum pedido encontrado.</p>";
-  }
-
-  let html = `
+  <!-- ABERTOS -->
+  <section id="aba-abertos">
+    <h2 class="small">Pedidos Abertos</h2>
     <table>
-      <tr>
-        <th>ID</th>
-        <th>Nome Cliente</th>
-        <th>Valor Total</th>
-        <th>Data do Pedido</th>
-      </tr>
-  `;
+      <thead>
+        <tr><th>ID</th><th>Cliente</th><th>Valor Total</th><th>Data</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="tabela-abertos"><tr><td colspan="5" class="small">Carregando...</td></tr></tbody>
+    </table>
+  </section>
 
-  pedidos.forEach(pedido => {
-    // Formata data (ex: 2025-10-13 → 13/10/2025)
-    const dataFormatada = pedido.data_pedido
-      ? new Date(pedido.data_pedido).toLocaleDateString("pt-BR")
-      : "-";
+  <!-- FINALIZADOS -->
+  <section id="aba-finalizados" style="display:none;">
+    <h2 class="small">Pedidos Finalizados</h2>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Cliente</th><th>Valor Total</th><th>Data</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="tabela-finalizados"><tr><td colspan="5" class="small">Carregando...</td></tr></tbody>
+    </table>
+  </section>
+</div>
 
-    html += `
-      <tr>
-        <td>${pedido.id || "-"}</td>
-        <td>${pedido.nome_cliente || "-"}</td>
-        <td>R$ ${formatarValor(pedido.valor_total)}</td>
-        <td>${dataFormatada}</td>
-      </tr>
-    `;
-  });
+<script>
+/* --------- CORREÇÃO DE DATA (NÃO USAR new Date) --------- */
+function formatDateISO(str) {
+  if (!str) return "-";
 
-  html += `</table>`;
-  return html;
+  // aceita "2025-03-04" ou ISO "2025-03-04T00:00:00"
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return str;
+
+  const ano = match[1];
+  const mes = match[2];
+  const dia = match[3];
+
+  return `${dia}/${mes}/${ano}`; // sem conversão de fuso
 }
 
-    async function carregarTodosPedidos() {
-      const mensagem = document.getElementById("mensagem");
-      const resultadoDiv = document.getElementById("resultado");
+function safeToFixed(n, d = 2) {
+  if (n === null || n === undefined) return (0).toFixed(d);
+  const num = Number(n);
+  if (isNaN(num)) return (0).toFixed(d);
+  return num.toFixed(d);
+}
 
-      mensagem.textContent = "Carregando pedidos...";
-      mensagem.className = "";
+function setMensagem(texto, tipo='') {
+  const el = document.getElementById("mensagem");
+  el.textContent = texto || "";
+  el.className = tipo ? (tipo === "erro" ? "erro" : "sucesso") : "small";
+}
 
-      try {
-        const res = await fetch("/pedido");
+async function safeFetchJSON(url, opts) {
+  try {
+    const res = await fetch(url, opts);
 
-        if (!res.ok) throw new Error("Erro ao carregar pedidos");
-
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-          mensagem.textContent = "Nenhum pedido encontrado.";
-          mensagem.className = "erro";
-          resultadoDiv.innerHTML = "";
-        } else {
-          mensagem.textContent = `${data.length} pedido(s) encontrado(s).`;
-          mensagem.className = "sucesso";
-          resultadoDiv.innerHTML = criarTabelaPedidos(data);
-        }
-      } catch (err) {
-        mensagem.textContent = "Erro ao carregar pedidos.";
-        mensagem.className = "erro";
-        resultadoDiv.innerHTML = "";
-        console.error(err);
-      }
+    if (!res.ok) {
+      const text = await res.text();
+      throw { status: res.status, bodyText: text.substring(0, 1000) };
     }
 
-    async function buscarPedido() {
-      let nome = document.getElementById("nome").value.trim();
-      const mensagem = document.getElementById("mensagem");
-      const resultadoDiv = document.getElementById("resultado");
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) return await res.json();
 
-      if (!nome) {
-        carregarTodosPedidos();
-        return;
-      }
+    const txt = await res.text();
+    return JSON.parse(txt);
 
-      nome = capitalizeNome(nome);
+  } catch (err) {
+    if (err.status) throw err;
+    throw { status: 0, bodyText: String(err) };
+  }
+}
 
-      mensagem.textContent = "Pesquisando...";
-      mensagem.className = "";
-      resultadoDiv.innerHTML = "";
+/* ----------- CARREGAR PEDIDOS ABERTOS ----------- */
+async function carregarPedidosAbertos() {
+  const tbody = document.getElementById("tabela-abertos");
+  tbody.innerHTML = "<tr><td colspan='5' class='small'>Carregando...</td></tr>";
+  setMensagem("Carregando pedidos abertos...");
 
-      try {
-        const res = await fetch(`/pedido/${encodeURIComponent(nome)}`);
+  try {
+    const pedidos = await safeFetchJSON("/pedido");
+    const lista = Array.isArray(pedidos) ? pedidos : (pedidos ? [pedidos] : []);
 
-        if (res.status === 404) {
-          mensagem.textContent = "Pedido não encontrado.";
-          mensagem.className = "erro";
-          resultadoDiv.innerHTML = "";
-          return;
-        }
-
-        if (!res.ok) throw new Error("Erro na resposta da API");
-
-        const data = await res.json();
-
-        if (data.erro) {
-          mensagem.textContent = data.erro;
-          mensagem.className = "erro";
-          resultadoDiv.innerHTML = "";
-        } else {
-          mensagem.textContent = "Pedido encontrado!";
-          mensagem.className = "sucesso";
-          resultadoDiv.innerHTML = criarTabelaPedidos([data]);
-        }
-      } catch (err) {
-        mensagem.textContent = "Erro ao buscar pedido.";
-        mensagem.className = "erro";
-        resultadoDiv.innerHTML = "";
-        console.error(err);
-      }
+    if (lista.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='5' class='small'>Nenhum pedido.</td></tr>";
+      setMensagem("Nenhum pedido aberto.", "erro");
+      return;
     }
 
-    // NOVA FUNÇÃO -> Deletar pedidos por data
-    async function deletarPedidosPorData() {
-      const dataInicio = document.getElementById("data_inicio").value;
-      const dataFim = document.getElementById("data_fim").value;
-      const mensagem = document.getElementById("mensagem");
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.nome_cliente}</td>
+        <td>R$ ${safeToFixed(p.valor_total)}</td>
+        <td>${formatDateISO(p.data_pedido)}</td>
+        <td class="actions">
+          <button class="btn btn-fin" onclick="finalizarPedido(${p.id})">Finalizar</button>
+          <button class="btn btn-del" onclick="excluirPedido(${p.id})">Excluir</button>
+        </td>
+      </tr>
+    `).join("");
 
-      if (!dataInicio || !dataFim) {
-        mensagem.textContent = "Preencha as duas datas.";
-        mensagem.className = "erro";
-        return;
-      }
+    setMensagem("Pedidos abertos carregados.", "sucesso");
 
-      mensagem.textContent = "Deletando pedidos...";
-      mensagem.className = "";
+  } catch (err) {
+    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
+    setMensagem("Erro ao carregar pedidos abertos.", "erro");
+  }
+}
 
-      try {
-        const res = await fetch("/deletar_pedidos_por_data", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data_inicio: dataInicio, data_fim: dataFim })
-        });
+/* -------- FINALIZADOS -------- */
+async function carregarPedidosFinalizados() {
+  const tbody = document.getElementById("tabela-finalizados");
+  tbody.innerHTML = "<tr><td colspan='5' class='small'>Carregando...</td></tr>";
+  setMensagem("Carregando pedidos finalizados...");
 
-        const data = await res.json();
+  try {
+    const pedidos = await safeFetchJSON("/pedidos_finalizados");
+    const lista = Array.isArray(pedidos) ? pedidos : (pedidos ? [pedidos] : []);
 
-        if (res.ok) {
-          mensagem.textContent = data.mensagem;
-          mensagem.className = "sucesso";
-          carregarTodosPedidos(); // Atualiza lista após deletar
-        } else {
-          mensagem.textContent = data.mensagem || data.erro || "Erro ao deletar.";
-          mensagem.className = "erro";
-        }
-      } catch (err) {
-        mensagem.textContent = "Erro ao deletar pedidos.";
-        mensagem.className = "erro";
-        console.error(err);
-      }
+    if (lista.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='5' class='small'>Nenhum finalizado.</td></tr>";
+      setMensagem("Nenhum finalizado encontrado.", "erro");
+      return;
     }
 
-    window.onload = carregarTodosPedidos;
-  </script>
+    tbody.innerHTML = lista.map(p => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.nome_cliente}</td>
+        <td>R$ ${safeToFixed(p.valor_total)}</td>
+        <td>${formatDateISO(p.data_pedido)}</td>
+        <td class="actions">
+          <button class="btn btn-del" onclick="excluirFinalizado(${p.id})">Excluir</button>
+        </td>
+      </tr>
+    `).join("");
+
+    setMensagem("Pedidos finalizados carregados.", "sucesso");
+
+  } catch (err) {
+    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
+    setMensagem("Erro ao carregar pedidos finalizados.", "erro");
+  }
+}
+
+/* ---------- AÇÕES ---------- */
+async function finalizarPedido(id) {
+  if (!confirm("Finalizar este pedido?")) return;
+
+  setMensagem("Finalizando...");
+
+  try {
+    const ped = await safeFetchJSON(`/pedido/${id}`);
+
+    await fetch("/pedidos_finalizados", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        valor_total: ped.valor_total,
+        nome_cliente: ped.nome_cliente,
+        data_pedido: ped.data_pedido
+      })
+    });
+
+    await fetch(`/pedido/${id}`, { method: "DELETE" });
+
+    setMensagem("Pedido finalizado!", "sucesso");
+    carregarPedidosAbertos();
+
+  } catch (err) {
+    setMensagem("Erro ao finalizar pedido.", "erro");
+  }
+}
+
+async function excluirPedido(id) {
+  if (!confirm("Excluir este pedido?")) return;
+
+  await fetch(`/pedido/${id}`, { method: "DELETE" });
+  carregarPedidosAbertos();
+}
+
+async function excluirFinalizado(id) {
+  if (!confirm("Excluir este finalizado?")) return;
+
+  await fetch(`/pedidos_finalizados/${id}`, { method: "DELETE" });
+  carregarPedidosFinalizados();
+}
+
+/* --------- ABAS ---------- */
+function abrirAba(nome) {
+  document.getElementById("aba-abertos").style.display = nome === "abertos" ? "" : "none";
+  document.getElementById("aba-finalizados").style.display = nome === "finalizados" ? "" : "none";
+
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById(`tab-${nome}`).classList.add("active");
+
+  if (nome === "abertos") carregarPedidosAbertos();
+  if (nome === "finalizados") carregarPedidosFinalizados();
+}
+
+/* Inicial */
+carregarPedidosAbertos();
+</script>
+
 </body>
 </html>
