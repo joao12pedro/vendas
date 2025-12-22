@@ -146,3 +146,38 @@ def remover_produto_dia(id):
         return jsonify({"mensagem": "Produto removido do dia"}), 200
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
+@produto_bp.route("/produto_cliente", methods=["POST"])
+def criar_produto_cliente():
+    data = request.get_json()
+
+    if not data or "cliente" not in data or "produto" not in data:
+        return jsonify({"erro": "cliente e produto são obrigatórios"}), 400
+
+    supabase = connect_db()
+
+    try:
+        novo = {
+            "cliente": data["cliente"],
+            "produto": data["produto"]
+        }
+
+        resposta = supabase.table("produto_cliente").insert(novo).execute()
+
+        return jsonify({
+            "mensagem": "Registro criado com sucesso",
+            "dados": resposta.data[0]
+        }), 201
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+@produto_bp.route("/produto_cliente", methods=["GET"])
+def listar_produto_cliente():
+    supabase = connect_db()
+    try:
+        resposta = supabase.table("produto_cliente").select("*").execute()
+        return jsonify(resposta.data), 200
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
