@@ -1,244 +1,276 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Painel de Pedidos</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f5f5f5; padding:20px; }
-    h1 { text-align:center; margin-bottom:10px; }
-    .tabs { display:flex; gap:10px; justify-content:center; margin-bottom:18px; }
-    .tab { padding:8px 14px; cursor:pointer; border-radius:6px; background:#e0e0e0; }
-    .tab.active { background:#1976d2; color:#fff; }
-    .container { max-width:1000px; margin:0 auto; }
-    table { width:100%; border-collapse:collapse; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-    th, td { padding:10px; border:1px solid #e8e8e8; text-align:left; }
-    th { background:#fafafa; }
-    .actions { display:flex; gap:8px; }
-    .btn { padding:6px 10px; border:none; border-radius:5px; cursor:pointer; }
-    .btn-del{ background:#d32f2f; color:#fff; }
-    .btn-fin{ background:#2e7d32; color:#fff; }
-    #mensagem { text-align:center; margin:12px 0; font-weight:600; }
-    .erro { color:#d32f2f; }
-    .sucesso { color:#2e7d32; }
-    .small { font-size:0.9rem; color:#666; }
-  </style>
+<meta charset="UTF-8">
+<title>Painel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab {
+    padding: 10px 16px;
+    background: #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.tab.active {
+    background: #1976d2;
+    color: #fff;
+}
+
+section {
+    display: none;
+    max-width: 1100px;
+    margin: auto;
+}
+
+section.active {
+    display: block;
+}
+
+.topo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+input {
+    padding: 8px;
+    width: 260px;
+}
+
+button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-fin { background: #2e7d32; color: #fff; }
+.btn-del { background: #d32f2f; color: #fff; }
+.btn-print { background: #455a64; color: #fff; }
+.btn-limpar { background: #ef6c00; color: #fff; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="container">
-  <h1>Painel de Pedidos</h1>
+<h1>Painel de Pedidos</h1>
 
-  <div class="tabs">
-    <div id="tab-abertos" class="tab active" onclick="abrirAba('abertos')">Pedidos Abertos</div>
-    <div id="tab-finalizados" class="tab" onclick="abrirAba('finalizados')">Pedidos Finalizados</div>
-  </div>
-
-  <div id="mensagem" class="small"></div>
-
-  <!-- ABERTOS -->
-  <section id="aba-abertos">
-    <h2 class="small">Pedidos Abertos</h2>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>Cliente</th><th>Valor Total</th><th>Data</th><th>Ações</th></tr>
-      </thead>
-      <tbody id="tabela-abertos"><tr><td colspan="5" class="small">Carregando...</td></tr></tbody>
-    </table>
-  </section>
-
-  <!-- FINALIZADOS -->
-  <section id="aba-finalizados" style="display:none;">
-    <h2 class="small">Pedidos Finalizados</h2>
-    <table>
-      <thead>
-        <tr><th>ID</th><th>Cliente</th><th>Valor Total</th><th>Data</th><th>Ações</th></tr>
-      </thead>
-      <tbody id="tabela-finalizados"><tr><td colspan="5" class="small">Carregando...</td></tr></tbody>
-    </table>
-  </section>
+<div class="tabs">
+    <div class="tab active" onclick="abrirAba('abertos', this)">Pedidos Abertos</div>
+    <div class="tab" onclick="abrirAba('finalizados', this)">Pedidos Finalizados</div>
+    <div class="tab" onclick="abrirAba('clientes', this)">Produtos do Cliente</div>
 </div>
 
+<!-- PEDIDOS ABERTOS -->
+<section id="abertos" class="active">
+    <div class="topo">
+        <input id="buscaAbertos" placeholder="Buscar cliente">
+        <button onclick="buscarAbertos()">Buscar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Data</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-abertos"></tbody>
+    </table>
+</section>
+
+<!-- FINALIZADOS -->
+<section id="finalizados">
+    <div class="topo">
+        <input id="buscaFinalizados" placeholder="Buscar cliente">
+        <div>
+            <button class="btn-print" onclick="imprimir()">Imprimir</button>
+            <button class="btn-limpar" onclick="limparFinalizados()">Limpar</button>
+        </div>
+    </div>
+
+    <table id="tabela-impressao">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-finalizados"></tbody>
+    </table>
+</section>
+
+<!-- PRODUTOS CLIENTE -->
+<section id="clientes">
+    <div class="topo">
+        <input id="buscaCliente" placeholder="Buscar cliente ou produto">
+        <button onclick="buscarClientes()">Buscar</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Produto</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-clientes"></tbody>
+    </table>
+</section>
+
 <script>
-/* --------- CORREÇÃO DE DATA (NÃO USAR new Date) --------- */
-function formatDateISO(str) {
-  if (!str) return "-";
+const API = "";
 
-  // aceita "2025-03-04" ou ISO "2025-03-04T00:00:00"
-  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return str;
+let pedidosAbertos = [];
+let pedidosFinalizados = [];
+let produtosCliente = [];
 
-  const ano = match[1];
-  const mes = match[2];
-  const dia = match[3];
+/* ---------- ABAS ---------- */
+function abrirAba(id, el) {
+    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    el.classList.add("active");
 
-  return `${dia}/${mes}/${ano}`; // sem conversão de fuso
+    if (id === "abertos") carregarAbertos();
+    if (id === "finalizados") carregarFinalizados();
+    if (id === "clientes") carregarClientes();
 }
 
-function safeToFixed(n, d = 2) {
-  if (n === null || n === undefined) return (0).toFixed(d);
-  const num = Number(n);
-  if (isNaN(num)) return (0).toFixed(d);
-  return num.toFixed(d);
+/* ---------- ABERTOS ---------- */
+async function carregarAbertos() {
+    const r = await fetch(`${API}/pedido`);
+    pedidosAbertos = await r.json();
+    renderAbertos(pedidosAbertos);
 }
 
-function setMensagem(texto, tipo='') {
-  const el = document.getElementById("mensagem");
-  el.textContent = texto || "";
-  el.className = tipo ? (tipo === "erro" ? "erro" : "sucesso") : "small";
-}
-
-async function safeFetchJSON(url, opts) {
-  try {
-    const res = await fetch(url, opts);
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw { status: res.status, bodyText: text.substring(0, 1000) };
-    }
-
-    const ct = res.headers.get("content-type") || "";
-    if (ct.includes("application/json")) return await res.json();
-
-    const txt = await res.text();
-    return JSON.parse(txt);
-
-  } catch (err) {
-    if (err.status) throw err;
-    throw { status: 0, bodyText: String(err) };
-  }
-}
-
-/* ----------- CARREGAR PEDIDOS ABERTOS ----------- */
-async function carregarPedidosAbertos() {
-  const tbody = document.getElementById("tabela-abertos");
-  tbody.innerHTML = "<tr><td colspan='5' class='small'>Carregando...</td></tr>";
-  setMensagem("Carregando pedidos abertos...");
-
-  try {
-    const pedidos = await safeFetchJSON("/pedido");
-    const lista = Array.isArray(pedidos) ? pedidos : (pedidos ? [pedidos] : []);
-
-    if (lista.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='5' class='small'>Nenhum pedido.</td></tr>";
-      setMensagem("Nenhum pedido aberto.", "erro");
-      return;
-    }
-
-    tbody.innerHTML = lista.map(p => `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.nome_cliente}</td>
-        <td>R$ ${safeToFixed(p.valor_total)}</td>
-        <td>${formatDateISO(p.data_pedido)}</td>
-        <td class="actions">
-          <button class="btn btn-fin" onclick="finalizarPedido(${p.id})">Finalizar</button>
-          <button class="btn btn-del" onclick="excluirPedido(${p.id})">Excluir</button>
-        </td>
-      </tr>
+function renderAbertos(lista) {
+    document.getElementById("tabela-abertos").innerHTML = lista.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.nome_cliente}</td>
+            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
+            <td>${p.data_pedido}</td>
+            <td>
+                <button class="btn-fin" onclick="finalizar(${p.id})">Finalizar</button>
+                <button class="btn-del" onclick="excluir(${p.id})">Excluir</button>
+            </td>
+        </tr>
     `).join("");
-
-    setMensagem("Pedidos abertos carregados.", "sucesso");
-
-  } catch (err) {
-    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
-    setMensagem("Erro ao carregar pedidos abertos.", "erro");
-  }
 }
 
-/* -------- FINALIZADOS -------- */
-async function carregarPedidosFinalizados() {
-  const tbody = document.getElementById("tabela-finalizados");
-  tbody.innerHTML = "<tr><td colspan='5' class='small'>Carregando...</td></tr>";
-  setMensagem("Carregando pedidos finalizados...");
-
-  try {
-    const pedidos = await safeFetchJSON("/pedidos_finalizados");
-    const lista = Array.isArray(pedidos) ? pedidos : (pedidos ? [pedidos] : []);
-
-    if (lista.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='5' class='small'>Nenhum finalizado.</td></tr>";
-      setMensagem("Nenhum finalizado encontrado.", "erro");
-      return;
-    }
-
-    tbody.innerHTML = lista.map(p => `
-      <tr>
-        <td>${p.id}</td>
-        <td>${p.nome_cliente}</td>
-        <td>R$ ${safeToFixed(p.valor_total)}</td>
-        <td>${formatDateISO(p.data_pedido)}</td>
-        <td class="actions">
-          <button class="btn btn-del" onclick="excluirFinalizado(${p.id})">Excluir</button>
-        </td>
-      </tr>
-    `).join("");
-
-    setMensagem("Pedidos finalizados carregados.", "sucesso");
-
-  } catch (err) {
-    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar.</td></tr>";
-    setMensagem("Erro ao carregar pedidos finalizados.", "erro");
-  }
+function buscarAbertos() {
+    const t = buscaAbertos.value.toLowerCase();
+    renderAbertos(pedidosAbertos.filter(p =>
+        p.nome_cliente.toLowerCase().includes(t)
+    ));
 }
 
-/* ---------- AÇÕES ---------- */
-async function finalizarPedido(id) {
-  if (!confirm("Finalizar este pedido?")) return;
+async function finalizar(id) {
+    await fetch(`/finalizar_pedido/${id}`, { method: "PUT" });
+    carregarAbertos();
+}
 
-  setMensagem("Finalizando...");
-
-  try {
-    const ped = await safeFetchJSON(`/pedido/${id}`);
-
-    await fetch("/pedidos_finalizados", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        valor_total: ped.valor_total,
-        nome_cliente: ped.nome_cliente,
-        data_pedido: ped.data_pedido
-      })
-    });
-
+async function excluir(id) {
     await fetch(`/pedido/${id}`, { method: "DELETE" });
-
-    setMensagem("Pedido finalizado!", "sucesso");
-    carregarPedidosAbertos();
-
-  } catch (err) {
-    setMensagem("Erro ao finalizar pedido.", "erro");
-  }
+    carregarAbertos();
 }
 
-async function excluirPedido(id) {
-  if (!confirm("Excluir este pedido?")) return;
-
-  await fetch(`/pedido/${id}`, { method: "DELETE" });
-  carregarPedidosAbertos();
+/* ---------- FINALIZADOS ---------- */
+async function carregarFinalizados() {
+    const r = await fetch(`/pedidos_finalizados`);
+    pedidosFinalizados = await r.json();
+    renderFinalizados(pedidosFinalizados);
 }
 
-async function excluirFinalizado(id) {
-  if (!confirm("Excluir este finalizado?")) return;
-
-  await fetch(`/pedidos_finalizados/${id}`, { method: "DELETE" });
-  carregarPedidosFinalizados();
+function renderFinalizados(lista) {
+    document.getElementById("tabela-finalizados").innerHTML = lista.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.nome_cliente}</td>
+            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
+            <td>${p.data_pedido}</td>
+        </tr>
+    `).join("");
 }
 
-/* --------- ABAS ---------- */
-function abrirAba(nome) {
-  document.getElementById("aba-abertos").style.display = nome === "abertos" ? "" : "none";
-  document.getElementById("aba-finalizados").style.display = nome === "finalizados" ? "" : "none";
-
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-  document.getElementById(`tab-${nome}`).classList.add("active");
-
-  if (nome === "abertos") carregarPedidosAbertos();
-  if (nome === "finalizados") carregarPedidosFinalizados();
+function imprimir() {
+    const c = document.getElementById("tabela-impressao").outerHTML;
+    const w = window.open("", "", "width=900,height=600");
+    w.document.write(`<html><body>${c}</body></html>`);
+    w.print();
+    w.close();
 }
 
-/* Inicial */
-carregarPedidosAbertos();
+function limparFinalizados() {
+    fetch(`/pedido/limpar`, { method: "DELETE" })
+        .then(() => carregarFinalizados());
+}
+
+/* ---------- PRODUTOS CLIENTE ---------- */
+async function carregarClientes() {
+    const r = await fetch(`/produto_cliente`);
+    produtosCliente = await r.json();
+    renderClientes(produtosCliente);
+}
+
+function renderClientes(lista) {
+    document.getElementById("tabela-clientes").innerHTML = lista.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.cliente}</td>
+            <td>${p.produto}</td>
+        </tr>
+    `).join("");
+}
+
+function buscarClientes() {
+    const t = buscaCliente.value.toLowerCase();
+    renderClientes(produtosCliente.filter(p =>
+        p.cliente.toLowerCase().includes(t) ||
+        p.produto.toLowerCase().includes(t)
+    ));
+}
+
+/* INIT */
+carregarAbertos();
 </script>
 
 </body>
