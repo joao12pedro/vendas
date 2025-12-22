@@ -131,179 +131,131 @@
     <div class="container" id="produtos-dia-container"></div>
 
     <script>
-        // Função para formatar o preço como moeda
         function formatarPreco(valor) {
             const num = parseFloat(valor);
             if (isNaN(num)) return "R$ 0,00";
-
             return num.toLocaleString('pt-BR', {
                 style: 'currency',
                 currency: 'BRL'
             });
         }
 
-        // Carrega todos os produtos disponíveis
         async function carregarProdutos() {
-            try {
-                const resposta = await fetch("/produto");
-                if (!resposta.ok) throw new Error("Erro ao carregar produtos");
+            const resposta = await fetch("/produto");
+            const produtos = await resposta.json();
+            const container = document.getElementById("produtos-container");
+            container.innerHTML = "";
 
-                const produtos = await resposta.json();
-                const container = document.getElementById("produtos-container");
-                container.innerHTML = "";
+            produtos.forEach(produto => {
+                const card = document.createElement("div");
+                card.className = "card";
 
-                produtos.forEach(produto => {
-                    const card = document.createElement("div");
-                    card.className = "card";
+                card.innerHTML = `
+                    <h3>${produto.nome}</h3>
+                    <div class="preco">${formatarPreco(produto.preco)}</div>
+                    <button onclick="adicionarAoDia(${produto.id})">Adicionar ao Dia</button>
+                    <button class="btn-remover" onclick="removerProduto(${produto.id})">Remover Produto</button>
+                `;
 
-                    card.innerHTML = `
-                        <h3>${produto.nome}</h3>
-                        <div class="preco">${formatarPreco(produto.preco)}</div>
-                        <button onclick="adicionarAoDia(${produto.id})">Adicionar ao Dia</button>
-                        <button class="btn-remover" onclick="removerProduto(${produto.id})">Remover Produto</button>
-                    `;
-
-                    container.appendChild(card);
-                });
-            } catch (erro) {
-                console.error("Erro ao carregar produtos:", erro);
-                alert("Erro ao carregar produtos: " + erro.message);
-            }
+                container.appendChild(card);
+            });
         }
 
-        // Carrega os produtos do dia
         async function carregarProdutosDoDia() {
-            try {
-                const resposta = await fetch("/produto_dia");
-                if (!resposta.ok) throw new Error("Erro ao carregar produtos do dia");
+            const resposta = await fetch("/produtos_dia");
+            const produtosDia = await resposta.json();
 
-                const produtosDia = await resposta.json();
-                const container = document.getElementById("produtos-dia-container");
-                container.innerHTML = "";
+            const container = document.getElementById("produtos-dia-container");
+            container.innerHTML = "";
 
-                produtosDia.forEach(produto => {
-                    const card = document.createElement("div");
-                    card.className = "card-dia";
+            produtosDia.forEach(produto => {
+                const card = document.createElement("div");
+                card.className = "card-dia";
 
-                    card.innerHTML = `
-                        <h4>${produto.nome}</h4>
-                        <div class="preco">${formatarPreco(produto.preco)}</div>
-                        <button onclick="removerDoDia(${produto.id})">Remover do Dia</button>
-                    `;
+                card.innerHTML = `
+                    <h4>${produto.nome}</h4>
+                    <div class="preco">${formatarPreco(produto.preco)}</div>
+                    <button onclick="removerDoDia(${produto.id})">Remover do Dia</button>
+                `;
 
-                    container.appendChild(card);
-                });
-            } catch (erro) {
-                console.error("Erro ao carregar produtos do dia:", erro);
-                alert("Erro ao carregar produtos do dia: " + erro.message);
-            }
+                container.appendChild(card);
+            });
         }
 
-        // Adiciona um produto à lista do dia
         async function adicionarAoDia(produtoId) {
-            try {
-                const resposta = await fetch("/produto_dia", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ produto_id: produtoId })
-                });
+            const resposta = await fetch("/produto_dia", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ produto_id: produtoId })
+            });
 
-                if (!resposta.ok) {
-                    const erro = await resposta.json();
-                    throw new Error(erro.erro || "Erro ao adicionar produto ao dia");
-                }
+            const json = await resposta.json();
+            if (!resposta.ok) return alert(json.erro);
 
-                alert("Produto adicionado ao dia com sucesso!");
-                carregarProdutosDoDia();
-            } catch (erro) {
-                console.error("Erro ao adicionar produto ao dia:", erro);
-                alert(erro.message);
-            }
+            alert("Produto adicionado ao dia!");
+            carregarProdutosDoDia();
         }
 
-        // Remove um produto da lista geral
+        // 👉 Agora remove do geral + remove também do produto_dia
         async function removerProduto(produtoId) {
             if (!confirm("Tem certeza que deseja remover este produto permanentemente?")) return;
 
             try {
-                const resposta = await fetch(`/produto/${produtoId}`, {
-                    method: "DELETE"
-                });
+                // Remove da tabela produto
+                const respProduto = await fetch(`/produto/${produtoId}`, { method: "DELETE" });
 
-                if (!resposta.ok) {
-                    const erro = await resposta.json();
-                    throw new Error(erro.erro || "Erro ao remover produto");
+                if (!respProduto.ok) {
+                    const erro = await respProduto.json();
+                    return alert(erro.erro || "Erro ao remover produto");
                 }
 
-                alert("Produto removido com sucesso!");
+                // Remove automaticamente da lista do dia
+                await fetch(`/produto_dia/${produtoId}`, { method: "DELETE" });
+
+                alert("Produto removido de todas as listas!");
+
                 carregarProdutos();
                 carregarProdutosDoDia();
+
             } catch (erro) {
-                console.error("Erro ao remover produto:", erro);
-                alert(erro.message);
+                alert("Erro ao remover produto.");
             }
         }
 
-        // Remove um produto da lista do dia
         async function removerDoDia(produtoId) {
             if (!confirm("Remover este produto da lista do dia?")) return;
 
-            try {
-                const resposta = await fetch(`/produto_dia/${produtoId}`, {
-                    method: "DELETE"
-                });
+            const resposta = await fetch(`/produto_dia/${produtoId}`, { method: "DELETE" });
 
-                if (!resposta.ok) {
-                    const erro = await resposta.json();
-                    throw new Error(erro.erro || "Erro ao remover produto do dia");
-                }
-
-                alert("Produto removido do dia com sucesso!");
+            if (resposta.ok) {
                 carregarProdutosDoDia();
-            } catch (erro) {
-                console.error("Erro ao remover produto do dia:", erro);
-                alert(erro.message);
+            } else {
+                alert("Erro ao remover do dia");
             }
         }
 
-        // Adiciona um novo produto
         document.getElementById("form-produto").addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            const form = e.target;
-            const nome = form.nome.value.trim();
-            const preco = form.preco.value;
+            const nome = e.target.nome.value.trim();
+            const preco = e.target.preco.value;
 
-            if (!nome || !preco) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
+            const resposta = await fetch("/produto", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nome, preco })
+            });
 
-            try {
-                const formData = new FormData();
-                formData.append("nome", nome);
-                formData.append("preco", preco);
-
-                const resposta = await fetch("/produto", {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (!resposta.ok) {
-                    const erro = await resposta.json();
-                    throw new Error(erro.erro || "Erro ao adicionar produto");
-                }
-
-                alert("Produto adicionado com sucesso!");
-                form.reset();
+            if (resposta.ok) {
+                alert("Produto adicionado!");
+                e.target.reset();
                 carregarProdutos();
-            } catch (erro) {
-                console.error("Erro ao adicionar produto:", erro);
-                alert(erro.message);
+            } else {
+                const erro = await resposta.json();
+                alert(erro.erro);
             }
         });
 
-        // Carrega os dados ao iniciar
         document.addEventListener("DOMContentLoaded", () => {
             carregarProdutos();
             carregarProdutosDoDia();
