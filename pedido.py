@@ -48,6 +48,31 @@ def obter_pedido_por_id(id):
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+@pedido_bp.route("/pedido/pesquisar", methods=["GET"])
+def pesquisar_pedido_por_nome():
+    nome = request.args.get("nome")
+
+    if not nome:
+        return jsonify({"erro": "Nome não informado"}), 400
+
+    supabase = connect_db()
+
+    try:
+        resposta = (
+            supabase
+            .table("pedido")
+            .select("*")
+            .ilike("nome_cliente", f"%{nome}%")
+            .execute()
+        )
+
+        if not resposta.data:
+            return jsonify([]), 200
+
+        return jsonify(resposta.data), 200
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
 
 # -------------------------------------------------------------
 # 📌 POST /pedido — CRIAR NOVO PEDIDO
@@ -228,6 +253,22 @@ def excluir_pedido(id):
         supabase.table("pedido").delete().eq("id", id).execute()
 
         return jsonify({"mensagem": "Pedido excluído"}), 200
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
+
+
+@pedido_bp.route("/pedido/limpar", methods=["DELETE"])
+def limpar_pedidos_finalizados():
+    try:
+        supabase = connect_db()
+
+        # Deleta TODOS os registros da tabela
+        supabase.table("pedidos_finalizados").delete().neq("id", 0).execute()
+
+        return jsonify({"mensagem": "Todos os registros foram removidos"}), 200
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
