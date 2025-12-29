@@ -181,3 +181,12 @@ def listar_produto_cliente():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+
+@produto_bp.route("/produto_cliente", methods=["DELETE"])
+def deletar_produto_cliente():
+    supabase = connect_db()
+    try:
+        resposta = supabase.table("produto_cliente").delete().neq("id", 0).execute()
+        return jsonify(resposta.data), 200
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
