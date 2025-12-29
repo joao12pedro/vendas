@@ -50,6 +50,7 @@ section.active {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
+    gap: 10px;
 }
 
 input {
@@ -140,7 +141,10 @@ th, td {
 <section id="clientes">
     <div class="topo">
         <input id="buscaCliente" placeholder="Buscar cliente ou produto">
-        <button onclick="buscarClientes()">Buscar</button>
+        <div>
+            <button onclick="buscarClientes()">Buscar</button>
+            <button class="btn-del" onclick="deletarProdutosCliente()">Deletar todos</button>
+        </div>
     </div>
 
     <table>
@@ -156,12 +160,6 @@ th, td {
 </section>
 
 <script>
-const API = "";
-
-let pedidosAbertos = [];
-let pedidosFinalizados = [];
-let produtosCliente = [];
-
 /* ---------- ABAS ---------- */
 function abrirAba(id, el) {
     document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
@@ -175,8 +173,10 @@ function abrirAba(id, el) {
 }
 
 /* ---------- ABERTOS ---------- */
+let pedidosAbertos = [];
+
 async function carregarAbertos() {
-    const r = await fetch(`${API}/pedido`);
+    const r = await fetch("/pedido");
     pedidosAbertos = await r.json();
     renderAbertos(pedidosAbertos);
 }
@@ -214,8 +214,10 @@ async function excluir(id) {
 }
 
 /* ---------- FINALIZADOS ---------- */
+let pedidosFinalizados = [];
+
 async function carregarFinalizados() {
-    const r = await fetch(`/pedidos_finalizados`);
+    const r = await fetch("/pedidos_finalizados");
     pedidosFinalizados = await r.json();
     renderFinalizados(pedidosFinalizados);
 }
@@ -240,13 +242,15 @@ function imprimir() {
 }
 
 function limparFinalizados() {
-    fetch(`/pedido/limpar`, { method: "DELETE" })
+    fetch("/pedido/limpar", { method: "DELETE" })
         .then(() => carregarFinalizados());
 }
 
 /* ---------- PRODUTOS CLIENTE ---------- */
+let produtosCliente = [];
+
 async function carregarClientes() {
-    const r = await fetch(`/produto_cliente`);
+    const r = await fetch("/produto_cliente");
     produtosCliente = await r.json();
     renderClientes(produtosCliente);
 }
@@ -267,6 +271,13 @@ function buscarClientes() {
         p.cliente.toLowerCase().includes(t) ||
         p.produto.toLowerCase().includes(t)
     ));
+}
+
+async function deletarProdutosCliente() {
+    if (!confirm("Deseja apagar TODOS os produtos do cliente?")) return;
+
+    await fetch("/produto_cliente", { method: "DELETE" });
+    carregarClientes();
 }
 
 /* INIT */
