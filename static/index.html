@@ -76,7 +76,7 @@
         return;
       }
 
-      fetch("http://localhost:5000/usuario/login", {
+      fetch("https://vendas-svoq.onrender.com/usuario/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -89,7 +89,7 @@
           const id = data.usuario.id;
 
           // Agora buscar o perfil do usuário pelo ID
-          return fetch(`http://localhost:5000/usuario/${id}`);
+          return fetch(`https://vendas-svoq.onrender.com/usuario/${id}`);
         } else {
           throw new Error(data.erro || "Erro ao fazer login");
         }
@@ -119,3 +119,4 @@
   </script>
 </body>
 </html>
+
