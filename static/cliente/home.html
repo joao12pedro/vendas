@@ -108,15 +108,24 @@ let nomeClienteAtual = null;
 const msgEl = document.getElementById("mensagem");
 const tabelaProdutos = document.getElementById("tabelaProdutos");
 
-/* ------------------ Mensagem ------------------ */
-function mostrarMensagem(texto, tipo="") {
+/* ================== NORMALIZAR NOME ================== */
+function normalizarNome(nome) {
+  return nome
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
+}
+
+/* ================== MENSAGEM ================== */
+function mostrarMensagem(texto, tipo = "") {
   msgEl.textContent = texto;
   msgEl.className = "msg " + tipo;
 }
 
-/* ------------------ Criar Pedido ------------------ */
+/* ================== CRIAR PEDIDO ================== */
 document.getElementById("btnCriarPedido").addEventListener("click", async () => {
-  const nome = document.getElementById("nomeCliente").value.trim();
+  const nomeDigitado = document.getElementById("nomeCliente").value;
+  const nome = normalizarNome(nomeDigitado);
 
   if (!nome) {
     mostrarMensagem("Digite o nome do cliente", "error");
@@ -148,14 +157,15 @@ document.getElementById("btnCriarPedido").addEventListener("click", async () => 
   }
 });
 
-/* ------------------ Carregar Produtos do Dia ------------------ */
+/* ================== PRODUTOS DO DIA ================== */
 async function carregarProdutosDia() {
   try {
     const res = await fetch("/produtos_dia");
     const produtos = await res.json();
 
     if (!Array.isArray(produtos) || produtos.length === 0) {
-      tabelaProdutos.innerHTML = "<tr><td colspan='3'>Nenhum produto do dia</td></tr>";
+      tabelaProdutos.innerHTML =
+        "<tr><td colspan='3'>Nenhum produto do dia</td></tr>";
       return;
     }
 
@@ -171,11 +181,12 @@ async function carregarProdutosDia() {
 
   } catch (e) {
     console.error(e);
-    tabelaProdutos.innerHTML = "<tr><td colspan='3'>Erro ao carregar produtos</td></tr>";
+    tabelaProdutos.innerHTML =
+      "<tr><td colspan='3'>Erro ao carregar produtos</td></tr>";
   }
 }
 
-/* ------------------ Adicionar Produto ------------------ */
+/* ================== ADICIONAR PRODUTO ================== */
 async function adicionarProduto(nomeProduto) {
   if (!pedidoId || !nomeClienteAtual) {
     alert("Crie o pedido primeiro");
@@ -222,7 +233,7 @@ async function adicionarProduto(nomeProduto) {
   }
 }
 
-/* Inicial */
+/* ================== INICIAL ================== */
 carregarProdutosDia();
 </script>
 
