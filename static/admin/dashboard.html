@@ -1,265 +1,269 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard de Produtos</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            padding: 20px;
-        }
+<meta charset="UTF-8">
+<title>Dashboard — Produtos</title>
 
-        h1 {
-            text-align: center;
-        }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  padding: 30px;
+}
 
-        h2 {
-            margin-top: 40px;
-            color: #333;
-        }
+.card {
+  max-width: 1000px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
 
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
+input {
+  padding: 8px;
+  margin-right: 5px;
+}
 
-        .card, .card-dia {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            width: 200px;
-            padding: 15px;
-            text-align: center;
-        }
+button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 5px;
+  background: #1976d2;
+  color: #fff;
+  cursor: pointer;
+}
 
-        .card h3, .card-dia h4 {
-            margin: 10px 0;
-            font-size: 1.1em;
-        }
+button:hover {
+  opacity: 0.9;
+}
 
-        .card button, .card-dia button {
-            margin-top: 10px;
-            padding: 8px 12px;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
 
-        .card button {
-            background: #007bff;
-        }
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
 
-        .card button:hover {
-            background: #0056b3;
-        }
+th {
+  background: #f1f1f1;
+}
 
-        .card-dia button {
-            background: #ffc107;
-            color: #000;
-        }
+/* MODAL */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+}
 
-        .card-dia button:hover {
-            background: #e0a800;
-        }
-
-        .btn-remover {
-            background: #dc3545 !important;
-        }
-
-        .btn-remover:hover {
-            background: #c82333 !important;
-        }
-
-        form {
-            max-width: 400px;
-            margin: 0 auto;
-            margin-top: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        form input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        form button {
-            background: #28a745;
-            color: white;
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        form button:hover {
-            background: #218838;
-        }
-
-        .preco {
-            font-weight: bold;
-            color: #28a745;
-            margin: 10px 0;
-        }
-    </style>
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+</style>
 </head>
+
 <body>
-    <h1>Dashboard de Produtos</h1>
 
-    <form id="form-produto">
-        <h2>Adicionar Novo Produto</h2>
-        <input type="text" name="nome" placeholder="Nome do produto" required>
-        <input type="number" name="preco" step="0.01" min="0" placeholder="Preço" required>
-        <button type="submit">Adicionar Produto</button>
-    </form>
+<!-- ================= CADASTRAR PRODUTO ================= -->
+<div class="card">
+  <h2>Cadastrar Produto</h2>
 
-    <h2>Produtos Disponíveis</h2>
-    <div class="container" id="produtos-container"></div>
+  <input id="nomeProduto" placeholder="Nome do produto">
+  <input id="precoProduto" type="number" step="0.01" placeholder="Preço">
 
-    <h2>Produtos do Dia</h2>
-    <div class="container" id="produtos-dia-container"></div>
+  <button onclick="cadastrarProduto()">Cadastrar</button>
 
-    <script>
-        function formatarPreco(valor) {
-            const num = parseFloat(valor);
-            if (isNaN(num)) return "R$ 0,00";
-            return num.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
-        }
+  <p id="msgProduto"></p>
+</div>
 
-        async function carregarProdutos() {
-            const resposta = await fetch("/produto");
-            const produtos = await resposta.json();
-            const container = document.getElementById("produtos-container");
-            container.innerHTML = "";
+<!-- ================= PRODUTOS ================= -->
+<div class="card">
+  <h2>Produtos Cadastrados</h2>
 
-            produtos.forEach(produto => {
-                const card = document.createElement("div");
-                card.className = "card";
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaProdutos">
+      <tr><td colspan="3">Carregando...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-                card.innerHTML = `
-                    <h3>${produto.nome}</h3>
-                    <div class="preco">${formatarPreco(produto.preco)}</div>
-                    <button onclick="adicionarAoDia(${produto.id})">Adicionar ao Dia</button>
-                    <button class="btn-remover" onclick="removerProduto(${produto.id})">Remover Produto</button>
-                `;
+<!-- ================= PRODUTOS DO DIA ================= -->
+<div class="card">
+  <h2>Produtos do Dia</h2>
 
-                container.appendChild(card);
-            });
-        }
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Quantidade</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaProdutosDia">
+      <tr><td colspan="3">Carregando...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-        async function carregarProdutosDoDia() {
-            const resposta = await fetch("/produtos_dia");
-            const produtosDia = await resposta.json();
+<!-- ================= MODAL ================= -->
+<div class="modal" id="modalQtd">
+  <div class="modal-content">
+    <h3>Adicionar Produto ao Dia</h3>
 
-            const container = document.getElementById("produtos-dia-container");
-            container.innerHTML = "";
+    <p id="produtoSelecionado"></p>
 
-            produtosDia.forEach(produto => {
-                const card = document.createElement("div");
-                card.className = "card-dia";
+    <input
+      type="number"
+      id="inputQtd"
+      min="1"
+      placeholder="Quantidade"
+    >
 
-                card.innerHTML = `
-                    <h4>${produto.nome}</h4>
-                    <div class="preco">${formatarPreco(produto.preco)}</div>
-                    <button onclick="removerDoDia(${produto.id})">Remover do Dia</button>
-                `;
+    <br><br>
+    <button onclick="confirmarAdicionar()">Confirmar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
 
-                container.appendChild(card);
-            });
-        }
+<script>
+let produtoNomeAtual = "";
+let produtoPrecoAtual = 0;
 
-        async function adicionarAoDia(produtoId) {
-            const resposta = await fetch("/produto_dia", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ produto_id: produtoId })
-            });
+/* ================= CADASTRAR PRODUTO ================= */
+async function cadastrarProduto() {
+  const nome = document.getElementById("nomeProduto").value.trim();
+  const preco = document.getElementById("precoProduto").value;
 
-            const json = await resposta.json();
-            if (!resposta.ok) return alert(json.erro);
+  if (!nome || !preco) {
+    alert("Preencha todos os campos");
+    return;
+  }
 
-            alert("Produto adicionado ao dia!");
-            carregarProdutosDoDia();
-        }
+  const res = await fetch("/produto", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nome, preco })
+  });
 
-        // 👉 Agora remove do geral + remove também do produto_dia
-        async function removerProduto(produtoId) {
-            if (!confirm("Tem certeza que deseja remover este produto permanentemente?")) return;
+  if (!res.ok) {
+    alert("Erro ao cadastrar produto");
+    return;
+  }
 
-            try {
-                // Remove da tabela produto
-                const respProduto = await fetch(`/produto/${produtoId}`, { method: "DELETE" });
+  document.getElementById("msgProduto").innerText =
+    "Produto cadastrado com sucesso";
 
-                if (!respProduto.ok) {
-                    const erro = await respProduto.json();
-                    return alert(erro.erro || "Erro ao remover produto");
-                }
+  document.getElementById("nomeProduto").value = "";
+  document.getElementById("precoProduto").value = "";
 
-                // Remove automaticamente da lista do dia
-                await fetch(`/produto_dia/${produtoId}`, { method: "DELETE" });
+  carregarProdutos();
+}
 
-                alert("Produto removido de todas as listas!");
+/* ================= LISTAR PRODUTOS ================= */
+async function carregarProdutos() {
+  const res = await fetch("/produto");
+  const produtos = await res.json();
 
-                carregarProdutos();
-                carregarProdutosDoDia();
+  const tbody = document.getElementById("tabelaProdutos");
 
-            } catch (erro) {
-                alert("Erro ao remover produto.");
-            }
-        }
+  tbody.innerHTML = produtos.map(p => `
+    <tr>
+      <td>${p.nome}</td>
+      <td>R$ ${Number(p.preco).toFixed(2)}</td>
+      <td>
+        <button onclick="abrirModal('${p.nome}', ${p.preco})">
+          Adicionar ao Dia
+        </button>
+      </td>
+    </tr>
+  `).join("");
+}
 
-        async function removerDoDia(produtoId) {
-            if (!confirm("Remover este produto da lista do dia?")) return;
+/* ================= PRODUTOS DO DIA ================= */
+async function carregarProdutosDia() {
+  const res = await fetch("/produtos_dia");
+  const produtos = await res.json();
 
-            const resposta = await fetch(`/produto_dia/${produtoId}`, { method: "DELETE" });
+  const tbody = document.getElementById("tabelaProdutosDia");
 
-            if (resposta.ok) {
-                carregarProdutosDoDia();
-            } else {
-                alert("Erro ao remover do dia");
-            }
-        }
+  tbody.innerHTML = produtos.map(p => `
+    <tr>
+      <td>${p.nome}</td>
+      <td>R$ ${Number(p.preco).toFixed(2)}</td>
+      <td>${p.qtd}</td>
+    </tr>
+  `).join("");
+}
 
-        document.getElementById("form-produto").addEventListener("submit", async (e) => {
-            e.preventDefault();
 
-            const nome = e.target.nome.value.trim();
-            const preco = e.target.preco.value;
+/* ================= MODAL ================= */
+function abrirModal(nome, preco) {
+  produtoNomeAtual = nome;
+  produtoPrecoAtual = preco;
 
-            const resposta = await fetch("/produto", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, preco })
-            });
+  document.getElementById("produtoSelecionado").innerText =
+    `${nome} — R$ ${Number(preco).toFixed(2)}`;
 
-            if (resposta.ok) {
-                alert("Produto adicionado!");
-                e.target.reset();
-                carregarProdutos();
-            } else {
-                const erro = await resposta.json();
-                alert(erro.erro);
-            }
-        });
+  document.getElementById("inputQtd").value = 1;
+  document.getElementById("modalQtd").style.display = "flex";
+}
 
-        document.addEventListener("DOMContentLoaded", () => {
-            carregarProdutos();
-            carregarProdutosDoDia();
-        });
-    </script>
+function fecharModal() {
+  document.getElementById("modalQtd").style.display = "none";
+}
+
+/* ================= ADD AO DIA ================= */
+async function confirmarAdicionar() {
+  const qtd = Number(document.getElementById("inputQtd").value);
+
+  if (!qtd || qtd <= 0) {
+    alert("Quantidade inválida");
+    return;
+  }
+
+  const res = await fetch("/produto_dia", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nome: produtoNomeAtual,
+      preco: produtoPrecoAtual,
+      qtd: qtd
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.erro || "Erro ao adicionar produto");
+    return;
+  }
+
+  fecharModal();
+  carregarProdutosDia();
+}
+
+/* INIT */
+carregarProdutos();
+carregarProdutosDia();
+</script>
+
 </body>
 </html>
