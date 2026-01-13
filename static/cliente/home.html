@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Criar Pedido</title>
+<title>Home</title>
 
 <style>
 body {
@@ -10,48 +10,19 @@ body {
   background: #f4f6f8;
   padding: 30px;
 }
-
 .card {
-  max-width: 850px;
+  max-width: 800px;
   margin: auto;
   background: #fff;
   padding: 20px;
   border-radius: 8px;
 }
-
-input {
-  padding: 8px;
-  width: 60%;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  text-align: center;
-}
-
-th {
-  background: #eee;
-}
-
 button {
   padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  background: #1976d2;
-  color: #fff;
   cursor: pointer;
 }
-
 button:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>
 </head>
@@ -59,37 +30,36 @@ button:disabled {
 <body>
 
 <div class="card">
-  <h1>Criar Pedido</h1>
+  <h2>Criar Pedido</h2>
 
   <input id="nomeCliente" placeholder="Nome do cliente">
   <button onclick="criarPedido()">Criar Pedido</button>
 
   <p id="msg"></p>
 
-  <h2>Produtos do Dia</h2>
+  <hr>
 
-  <table>
+  <h3>Produtos do Dia</h3>
+
+  <table border="1" width="100%">
     <thead>
       <tr>
         <th>Produto</th>
         <th>Preço</th>
-        <th>Disponível</th>
+        <th>Qtd</th>
         <th>Ação</th>
       </tr>
     </thead>
-    <tbody id="tabelaProdutos">
-      <tr>
-        <td colspan="4">Carregando...</td>
-      </tr>
+    <tbody id="listaProdutos">
+      <tr><td colspan="4">Carregando...</td></tr>
     </tbody>
   </table>
 </div>
 
 <script>
-let pedidoId = null;
-let valorTotal = 0;
+let pedidoCriado = false;
 
-/* ================= UTIL ================= */
+/* ================= NORMALIZAR NOME ================= */
 function normalizarNome(nome) {
   return nome.trim().replace(/\s+/g, " ").toUpperCase();
 }
@@ -114,23 +84,32 @@ async function criarPedido() {
   const data = await res.json();
 
   if (!res.ok) {
-    alert(data.erro);
+    alert(data.erro || "Erro ao criar pedido");
     return;
   }
 
-  pedidoId = data.dados.id;
-  valorTotal = data.dados.valor_total || 0;
-
+  pedidoCriado = true;
   document.getElementById("msg").innerText =
-    `Pedido #${pedidoId} criado para ${nome}`;
+    `Pedido criado para ${nome}`;
 }
 
 /* ================= LISTAR PRODUTOS DO DIA ================= */
 async function carregarProdutosDia() {
   const res = await fetch("/produtos_dia");
-  const produtos = await res.json();
 
-  const tbody = document.getElementById("tabelaProdutos");
+  if (!res.ok) {
+    console.error("Erro ao buscar produtos do dia");
+    return;
+  }
+
+  const produtos = await res.json();
+  const tbody = document.getElementById("listaProdutos");
+
+  if (!Array.isArray(produtos) || produtos.length === 0) {
+    tbody.innerHTML =
+      "<tr><td colspan='4'>Nenhum produto disponível</td></tr>";
+    return;
+  }
 
   tbody.innerHTML = produtos.map(p => `
     <tr>
@@ -139,7 +118,7 @@ async function carregarProdutosDia() {
       <td>${p.qtd}</td>
       <td>
         <button
-          onclick="adicionarProduto('${p.nome}', ${p.preco})"
+          onclick="adicionarProduto('${p.nome}')"
           ${p.qtd <= 0 ? "disabled" : ""}
         >
           ${p.qtd <= 0 ? "Esgotado" : "Adicionar"}
@@ -150,50 +129,31 @@ async function carregarProdutosDia() {
 }
 
 /* ================= ADICIONAR PRODUTO ================= */
-async function adicionarProduto(nomeProduto, precoProduto) {
-  if (!pedidoId) {
+async function adicionarProduto(nomeProduto) {
+  if (!pedidoCriado) {
     alert("Crie o pedido primeiro");
     return;
   }
 
-  /* 1️⃣ Registra produto do cliente */
-  const resProduto = await fetch("/produto_cliente", {
+  const cliente = normalizarNome(
+    document.getElementById("nomeCliente").value
+  );
+
+  const res = await fetch("/adicionar_item", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
-      cliente: document.getElementById("nomeCliente").value,
+      cliente,
       produto: nomeProduto
     })
   });
 
-  const dataProduto = await resProduto.json();
+  const data = await res.json();
 
-  if (!resProduto.ok) {
-    alert(dataProduto.erro);
+  if (!res.ok) {
+    alert(data.erro);
     return;
   }
-
-  /* 2️⃣ Atualiza valor total do pedido */
-  valorTotal += Number(precoProduto);
-
-  const resPedido = await fetch(`/pedido/${pedidoId}`, {
-    method: "PUT",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      valor_total: valorTotal
-    })
-  });
-
-  const dataPedido = await resPedido.json();
-
-  if (!resPedido.ok) {
-    alert(dataPedido.erro);
-    return;
-  }
-
-  /* 3️⃣ Baixa estoque automaticamente (backend) */
-  document.getElementById("msg").innerText =
-    `Produto adicionado | Total: R$ ${valorTotal.toFixed(2)}`;
 
   carregarProdutosDia();
 }
