@@ -1,87 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Home — Novo Pedido</title>
+<meta charset="UTF-8">
+<title>Criar Pedido</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 30px;
-    }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  padding: 30px;
+}
 
-    .card {
-      max-width: 700px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+.card {
+  max-width: 850px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
 
-    h1 {
-      margin-bottom: 15px;
-    }
+input {
+  padding: 8px;
+  width: 60%;
+}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
 
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #1976d2;
-      color: #fff;
-      font-weight: bold;
-    }
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+th {
+  background: #eee;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
+button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  background: #1976d2;
+  color: #fff;
+  cursor: pointer;
+}
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background: #f1f1f1;
-    }
-
-    .msg {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-
-    .success { color: green; }
-    .error { color: red; }
-  </style>
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
 </head>
+
 <body>
 
 <div class="card">
   <h1>Criar Pedido</h1>
 
-  <!-- Nome do cliente -->
-  <input id="nomeCliente" type="text" placeholder="Nome do cliente">
-  <button id="btnCriarPedido">Criar Pedido</button>
+  <input id="nomeCliente" placeholder="Nome do cliente">
+  <button onclick="criarPedido()">Criar Pedido</button>
 
-  <div id="mensagem" class="msg"></div>
-
-  <hr>
+  <p id="msg"></p>
 
   <h2>Produtos do Dia</h2>
 
@@ -90,12 +73,13 @@
       <tr>
         <th>Produto</th>
         <th>Preço</th>
+        <th>Disponível</th>
         <th>Ação</th>
       </tr>
     </thead>
     <tbody id="tabelaProdutos">
       <tr>
-        <td colspan="3">Carregando produtos...</td>
+        <td colspan="4">Carregando...</td>
       </tr>
     </tbody>
   </table>
@@ -103,137 +87,118 @@
 
 <script>
 let pedidoId = null;
-let nomeClienteAtual = null;
+let valorTotal = 0;
 
-const msgEl = document.getElementById("mensagem");
-const tabelaProdutos = document.getElementById("tabelaProdutos");
-
-/* ================== NORMALIZAR NOME ================== */
+/* ================= UTIL ================= */
 function normalizarNome(nome) {
-  return nome
-    .trim()
-    .replace(/\s+/g, " ")
-    .toUpperCase();
+  return nome.trim().replace(/\s+/g, " ").toUpperCase();
 }
 
-/* ================== MENSAGEM ================== */
-function mostrarMensagem(texto, tipo = "") {
-  msgEl.textContent = texto;
-  msgEl.className = "msg " + tipo;
-}
-
-/* ================== CRIAR PEDIDO ================== */
-document.getElementById("btnCriarPedido").addEventListener("click", async () => {
-  const nomeDigitado = document.getElementById("nomeCliente").value;
-  const nome = normalizarNome(nomeDigitado);
+/* ================= CRIAR PEDIDO ================= */
+async function criarPedido() {
+  const nome = normalizarNome(
+    document.getElementById("nomeCliente").value
+  );
 
   if (!nome) {
-    mostrarMensagem("Digite o nome do cliente", "error");
+    alert("Digite o nome do cliente");
     return;
   }
 
-  try {
-    const res = await fetch("/pedido", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome_cliente: nome })
-    });
+  const res = await fetch("/pedido", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ nome_cliente: nome })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (!res.ok) {
-      mostrarMensagem(data.erro || "Erro ao criar pedido", "error");
-      return;
-    }
-
-    pedidoId = data.dados.id;
-    nomeClienteAtual = nome;
-
-    mostrarMensagem(`Pedido criado para ${nome}`, "success");
-
-  } catch (e) {
-    console.error(e);
-    mostrarMensagem("Erro de conexão com o servidor", "error");
+  if (!res.ok) {
+    alert(data.erro);
+    return;
   }
-});
 
-/* ================== PRODUTOS DO DIA ================== */
-async function carregarProdutosDia() {
-  try {
-    const res = await fetch("/produtos_dia");
-    const produtos = await res.json();
+  pedidoId = data.dados.id;
+  valorTotal = data.dados.valor_total || 0;
 
-    if (!Array.isArray(produtos) || produtos.length === 0) {
-      tabelaProdutos.innerHTML =
-        "<tr><td colspan='3'>Nenhum produto do dia</td></tr>";
-      return;
-    }
-
-    tabelaProdutos.innerHTML = produtos.map(p => `
-      <tr>
-        <td>${p.nome}</td>
-        <td>R$ ${Number(p.preco).toFixed(2)}</td>
-        <td>
-          <button onclick="adicionarProduto('${p.nome}')">Adicionar</button>
-        </td>
-      </tr>
-    `).join("");
-
-  } catch (e) {
-    console.error(e);
-    tabelaProdutos.innerHTML =
-      "<tr><td colspan='3'>Erro ao carregar produtos</td></tr>";
-  }
+  document.getElementById("msg").innerText =
+    `Pedido #${pedidoId} criado para ${nome}`;
 }
 
-/* ================== ADICIONAR PRODUTO ================== */
-async function adicionarProduto(nomeProduto) {
-  if (!pedidoId || !nomeClienteAtual) {
+/* ================= LISTAR PRODUTOS DO DIA ================= */
+async function carregarProdutosDia() {
+  const res = await fetch("/produtos_dia");
+  const produtos = await res.json();
+
+  const tbody = document.getElementById("tabelaProdutos");
+
+  tbody.innerHTML = produtos.map(p => `
+    <tr>
+      <td>${p.nome}</td>
+      <td>R$ ${Number(p.preco).toFixed(2)}</td>
+      <td>${p.qtd}</td>
+      <td>
+        <button
+          onclick="adicionarProduto('${p.nome}', ${p.preco})"
+          ${p.qtd <= 0 ? "disabled" : ""}
+        >
+          ${p.qtd <= 0 ? "Esgotado" : "Adicionar"}
+        </button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+/* ================= ADICIONAR PRODUTO ================= */
+async function adicionarProduto(nomeProduto, precoProduto) {
+  if (!pedidoId) {
     alert("Crie o pedido primeiro");
     return;
   }
 
-  try {
-    /* 1️⃣ Adiciona item ao pedido */
-    const resItem = await fetch("/adicionar", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        pedido_id: pedidoId,
-        nome_produto: nomeProduto,
-        quantidade: 1
-      })
-    });
+  /* 1️⃣ Registra produto do cliente */
+  const resProduto = await fetch("/produto_cliente", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      cliente: document.getElementById("nomeCliente").value,
+      produto: nomeProduto
+    })
+  });
 
-    const itemData = await resItem.json();
-    if (!resItem.ok) {
-      alert(itemData.erro || "Erro ao adicionar item");
-      return;
-    }
+  const dataProduto = await resProduto.json();
 
-    /* 2️⃣ Registra cliente + produto */
-    const resPC = await fetch("/produto_cliente", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cliente: nomeClienteAtual,
-        produto: nomeProduto
-      })
-    });
-
-    if (!resPC.ok) {
-      console.warn("Erro ao salvar produto_cliente");
-    }
-
-    mostrarMensagem(`Produto "${nomeProduto}" adicionado`, "success");
-
-  } catch (e) {
-    console.error(e);
-    mostrarMensagem("Erro ao adicionar produto", "error");
+  if (!resProduto.ok) {
+    alert(dataProduto.erro);
+    return;
   }
+
+  /* 2️⃣ Atualiza valor total do pedido */
+  valorTotal += Number(precoProduto);
+
+  const resPedido = await fetch(`/pedido/${pedidoId}`, {
+    method: "PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      valor_total: valorTotal
+    })
+  });
+
+  const dataPedido = await resPedido.json();
+
+  if (!resPedido.ok) {
+    alert(dataPedido.erro);
+    return;
+  }
+
+  /* 3️⃣ Baixa estoque automaticamente (backend) */
+  document.getElementById("msg").innerText =
+    `Produto adicionado | Total: R$ ${valorTotal.toFixed(2)}`;
+
+  carregarProdutosDia();
 }
 
-/* ================== INICIAL ================== */
+/* INIT */
 carregarProdutosDia();
 </script>
 
