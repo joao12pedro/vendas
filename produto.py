@@ -83,23 +83,22 @@ def deletar_produto(id):
 # Rotas para Produtos do Dia (tabela produto_dia)
 @produto_bp.route("/produtos_dia", methods=["GET"])
 def listar_produtos_dia():
-    """Retorna todos os produtos da tabela produto_dia"""
     supabase = connect_db()
     try:
-        supabase = connect_db()
-
         resposta = (
             supabase
-            .table("produto")
+            .table("produto_dia")
             .select("id, nome, preco, qtd")
             .order("nome")
             .execute()
         )
 
         return jsonify(resposta.data or []), 200
+
     except Exception as e:
-        print(f"Erro ao buscar produtos do dia: {str(e)}")  # Debug
-        return jsonify({"erro": f"Erro ao buscar produtos do dia: {str(e)}"}), 500
+        print("ERRO PRODUTOS_DIA:", e)
+        return jsonify({"erro": str(e)}), 500
+
 
 def baixar_estoque_produto(nome_produto: str):
     supabase = connect_db()
