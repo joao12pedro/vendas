@@ -48,7 +48,7 @@ def criar_produto():
         supabase = connect_db()
         resposta = supabase.table("produto").insert({
             "nome": nome,
-            "preco": float(preco),
+            "preco": float(preco)
         }).execute()
 
         return jsonify({"mensagem": "Produto criado", "data": resposta.data[0]}), 201
@@ -86,55 +86,96 @@ def listar_produtos_dia():
     """Retorna todos os produtos da tabela produto_dia"""
     supabase = connect_db()
     try:
-        resposta = supabase.table("produto_dia").select("*").execute()
-        print(f"Produtos do dia encontrados: {len(resposta.data)}")  # Debug
-        return jsonify(resposta.data), 200
+        supabase = connect_db()
+
+        resposta = (
+            supabase
+            .table("produto")
+            .select("id, nome, preco, qtd")
+            .order("nome")
+            .execute()
+        )
+
+        return jsonify(resposta.data or []), 200
     except Exception as e:
         print(f"Erro ao buscar produtos do dia: {str(e)}")  # Debug
         return jsonify({"erro": f"Erro ao buscar produtos do dia: {str(e)}"}), 500
 
+def baixar_estoque_produto(nome_produto: str):
+    supabase = connect_db()
+
+    resp = (
+        supabase
+        .table("produto_dia")
+        .select("id, qtd")
+        .eq("nome", nome_produto)
+        .limit(1)
+        .execute()
+    )
+
+    if not resp.data:
+        return False, "Produto não encontrado"
+
+    produto = resp.data[0]
+    qtd_atual = produto["qtd"]
+
+    if qtd_atual <= 0:
+        return False, "Produto esgotado"
+
+    nova_qtd = qtd_atual - 1
+
+    supabase.table("produto_dia").update({
+        "qtd": nova_qtd
+    }).eq("id", produto["id"]).execute()
+
+    return True, nova_qtd
+
+
 
 @produto_bp.route("/produto_dia", methods=["POST"])
 def adicionar_produto_dia():
+    supabase = connect_db()
+    data = request.get_json()
+
+    produto_id = data.get("produto_id")
+    qtd = data.get("qtd")
+
+    if not produto_id or not qtd or qtd <= 0:
+        return jsonify({"erro": "Dados inválidos"}), 400
+
     try:
-        data = request.get_json()
-        print("Recebido:", data)
+        # 1️⃣ Buscar estoque atual
+        resp_produto = (
+            supabase
+            .table("produto")
+            .select("qtd")
+            .eq("id", produto_id)
+            .limit(1)
+            .execute()
+        )
 
-        if not data or "produto_id" not in data:
-            return jsonify({"erro": "produto_id é obrigatório"}), 400
-
-        supabase = connect_db()
-
-        # Verifica se o produto existe
-        produto = supabase.table("produto").select("*").eq("id", data["produto_id"]).execute()
-        if not produto.data:
+        if not resp_produto.data:
             return jsonify({"erro": "Produto não encontrado"}), 404
 
-        produto_info = produto.data[0]
+        estoque_atual = resp_produto.data[0]["qtd"]
 
-        # Verifica se já está na lista do dia
-        existente = supabase.table("produto_dia") \
-            .select("*") \
-            .eq("id", produto_info["id"]) \
-            .execute()
+        if qtd > estoque_atual:
+            return jsonify({"erro": "Quantidade maior que o estoque"}), 400
 
-        if existente.data:
-            return jsonify({"erro": "Produto já está na lista do dia"}), 400
-
-        # Adiciona à lista do dia
-        resposta = supabase.table("produto_dia").insert({
-            "id": produto_info["id"],
-            "nome": produto_info["nome"],
-            "preco": produto_info["preco"]
+        # 2️⃣ Inserir produto do dia
+        supabase.table("produto_dia").insert({
+            "produto_id": produto_id,
+            "qtd": qtd
         }).execute()
 
-        return jsonify({
-            "mensagem": "Produto adicionado ao dia",
-            "data": resposta.data[0]
-        }), 201
+        # 3️⃣ Atualizar estoque
+        supabase.table("produto").update({
+            "qtd": estoque_atual - qtd
+        }).eq("id", produto_id).execute()
+
+        return jsonify({"ok": True}), 201
 
     except Exception as e:
-        print("Erro interno:", str(e))
         return jsonify({"erro": str(e)}), 500
 
 
