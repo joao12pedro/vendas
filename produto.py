@@ -129,6 +129,38 @@ def baixar_estoque_produto(nome_produto: str):
 
     return True, nova_qtd
 
+@produto_bp.route("/adicionar_produto_pedido", methods=["POST"])
+def adicionar_produto_pedido():
+    data = request.get_json()
+
+    cliente = data.get("cliente")
+    produto = data.get("produto")
+
+    if not cliente or not produto:
+        return jsonify({"erro": "cliente e produto são obrigatórios"}), 400
+
+    supabase = connect_db()
+
+    try:
+        # 1️⃣ Verifica estoque e baixa
+        ok, resultado = baixar_estoque_produto(produto)
+
+        if not ok:
+            return jsonify({"erro": resultado}), 400
+
+        # 2️⃣ Registra produto para o cliente
+        supabase.table("produto_cliente").insert({
+            "cliente": cliente,
+            "produto": produto
+        }).execute()
+
+        return jsonify({
+            "mensagem": "Produto adicionado com sucesso",
+            "estoque_restante": resultado
+        }), 200
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
 
 
 @produto_bp.route("/produto_dia", methods=["POST"])
@@ -148,7 +180,7 @@ def adicionar_produto_dia():
         existente = (
             supabase
             .table("produto_dia")
-            .select("id, qtd")
+            .select("id, nome, qtd")
             .eq("nome", nome)
             .limit(1)
             .execute()
@@ -185,30 +217,39 @@ def remover_produto_dia(id):
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
-@produto_bp.route("/produto_cliente", methods=["POST"])
-def criar_produto_cliente():
+@produto_bp.route("/adicionar_item", methods=["POST"])
+def adicionar_item():
     data = request.get_json()
 
-    if not data or "cliente" not in data or "produto" not in data:
-        return jsonify({"erro": "cliente e produto são obrigatórios"}), 400
+    cliente = data.get("cliente")
+    produto = data.get("produto")
+
+    if not cliente or not produto:
+        return jsonify({"erro": "Dados inválidos"}), 400
 
     supabase = connect_db()
 
     try:
-        novo = {
-            "cliente": data["cliente"],
-            "produto": data["produto"]
-        }
+        # 1️⃣ Baixar estoque
+        ok, resultado = baixar_estoque_produto(produto)
 
-        resposta = supabase.table("produto_cliente").insert(novo).execute()
+        if not ok:
+            return jsonify({"erro": resultado}), 400
+
+        # 2️⃣ Registrar produto_cliente
+        supabase.table("produto_cliente").insert({
+            "cliente": cliente,
+            "produto": produto
+        }).execute()
 
         return jsonify({
-            "mensagem": "Registro criado com sucesso",
-            "dados": resposta.data[0]
-        }), 201
+            "ok": True,
+            "qtd_restante": resultado
+        }), 200
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
 
 @produto_bp.route("/produto_cliente", methods=["GET"])
 def listar_produto_cliente():
