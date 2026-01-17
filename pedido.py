@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import jsonify, request, Blueprint
 from db_config import connect_db
-
+from produto import baixar_estoque_produto
 pedido_bp = Blueprint("pedido", __name__)
 
 # -------------------------------------------------------------
@@ -81,23 +81,84 @@ def pesquisar_pedido_por_nome():
 def criar_pedido():
     data = request.get_json()
 
-    if not data or "nome_cliente" not in data:
-        return jsonify({"erro": "O nome do cliente é obrigatório"}), 400
+    # ===== VALIDACOES =====
+    if not data:
+        return jsonify({"erro": "JSON inválido"}), 400
+
+    nome_cliente = data.get("nome_cliente")
+    produtos = data.get("produtos")
+
+    if not nome_cliente:
+        return jsonify({"erro": "Nome do cliente é obrigatório"}), 400
+
+    if not produtos or not isinstance(produtos, list):
+        return jsonify({"erro": "Pedido sem produtos"}), 400
 
     supabase = connect_db()
 
     try:
-        novo = {
-            "nome_cliente": data["nome_cliente"],
-            "valor_total": 0.00,
+        # ===== CRIA PEDIDO =====
+        pedido = supabase.table("pedido").insert({
+            "nome_cliente": nome_cliente,
+            "valor_total": 0,
+            "status": "aberto",
             "data_pedido": datetime.now().strftime("%Y-%m-%d")
-        }
+        }).execute()
 
-        resposta = supabase.table("pedido").insert(novo).execute()
+        pedido_id = pedido.data[0]["id"]
+        valor_total = 0
+
+        # ===== PROCESSA PRODUTOS =====
+        for item in produtos:
+            nome_produto = item.get("nome")
+            quantidade = int(item.get("quantidade", 1))
+
+            if not nome_produto or quantidade <= 0:
+                continue
+
+            # 🔴 BAIXA ESTOQUE
+            ok, resultado = baixar_estoque_produto(
+                nome_produto, quantidade
+            )
+
+            if not ok:
+                return jsonify({
+                    "erro": f"Estoque insuficiente: {nome_produto}"
+                }), 400
+
+            # 🔹 BUSCA PRECO
+            prod = supabase.table("produto") \
+                .select("preco") \
+                .eq("nome", nome_produto) \
+                .single() \
+                .execute()
+
+            preco = float(prod.data["preco"])
+            subtotal = preco * quantidade
+            valor_total += subtotal
+
+            # ✅ INSERE ITEM
+            supabase.table("pedido_item").insert({
+                "pedido_id": pedido_id,
+                "produto": nome_produto,
+                "quantidade": quantidade,
+                "preco_unitario": preco,
+                "subtotal": subtotal
+            }).execute()
+
+        # ===== ATUALIZA PEDIDO =====
+        supabase.table("pedido").update({
+            "valor_total": valor_total,
+            "status": "finalizado"
+        }).eq("id", pedido_id).execute()
 
         return jsonify({
             "mensagem": "Pedido criado com sucesso",
-            "dados": resposta.data[0]
+            "dados": {
+                "id": pedido_id,
+                "cliente": nome_cliente,
+                "valor_total": valor_total
+            }
         }), 201
 
     except Exception as e:
@@ -107,69 +168,66 @@ def criar_pedido():
 # -------------------------------------------------------------
 # 📌 POST /adicionar — ADICIONAR ITEM AO PEDIDO
 # -------------------------------------------------------------
-@pedido_bp.route("/adicionar", methods=['POST'])
-def adicionar_item_pedido():
+@pedido_bp.route("/adicionar", methods=["POST"])
+def adicionar_produto():
     data = request.get_json()
 
-    campos = ["pedido_id", "nome_produto"]
-    if not all(c in data for c in campos):
-        return jsonify({"erro": "pedido_id e nome_produto são obrigatórios"}), 400
-
-    pedido_id = data["pedido_id"]
-    nome_produto = data["nome_produto"]
+    pedido_id = data.get("pedido_id")
+    nome_produto = data.get("nome_produto")
     quantidade = data.get("quantidade", 1)
 
+    if not pedido_id or not nome_produto:
+        return jsonify({"erro": "Dados inválidos"}), 400
+
+    # 🔴 BAIXA ESTOQUE PRIMEIRO
+    ok, resultado = baixar_estoque_produto(nome_produto)
+
+    if not ok:
+        return jsonify({"erro": resultado}), 400
+
+    # ✅ ADICIONA ITEM AO PEDIDO
+    supabase = connect_db()
+    resp = supabase.table("pedido_item").insert({
+        "pedido_id": pedido_id,
+        "produto": nome_produto,
+        "quantidade": quantidade
+    }).execute()
+
+    itens = supabase.table("pedido_item") \
+        .select("id") \
+        .eq("pedido_id", id) \
+        .execute()
+
+    if not itens.data:
+        return jsonify({"erro": "Pedido sem itens"}), 400
+
+    supabase.table("pedido").update({
+        "status": "finalizado"
+    }).eq("id", id).execute()
+
+    return jsonify({
+        "mensagem": "Produto adicionado",
+        "estoque_restante": resultado,
+        "item": resp.data[0]
+    }), 201
+
+@pedido_bp.route("/pedido/<int:id>", methods=["POST"])
+def finalizar_pedido(id):
     supabase = connect_db()
 
-    try:
-        # Verifica pedido
-        pedido = supabase.table("pedido").select("*").eq("id", pedido_id).execute()
-        if not pedido.data:
-            return jsonify({"erro": "Pedido não encontrado"}), 404
+    itens = supabase.table("pedido_item") \
+        .select("id") \
+        .eq("pedido_id", id) \
+        .execute()
 
-        # Busca produto no produto_dia
-        produto = (
-            supabase.table("produto_dia")
-            .select("*")
-            .ilike("nome", f"%{nome_produto}%")
-            .execute()
-        )
+    if not itens.data:
+        return jsonify({"erro": "Pedido sem itens"}), 400
 
-        if not produto.data:
-            return jsonify({"erro": f"Produto '{nome_produto}' não encontrado"}), 404
+    supabase.table("pedido").update({
+        "status": "finalizado"
+    }).eq("id", id).execute()
 
-        produto = produto.data[0]
-
-        preco_unit = produto["preco"]
-
-        # Inserir item
-        novo_item = {
-            "pedido_id": pedido_id,
-            "produto_id": produto["id"],
-            "quantidade": quantidade,
-            "preco_unitario": preco_unit
-        }
-
-        item = supabase.table("itens_pedido").insert(novo_item).execute()
-
-        # Atualizar valor total
-        subtotal = preco_unit * quantidade
-        novo_total = pedido.data[0]["valor_total"] + subtotal
-
-        supabase.table("pedido").update({
-            "valor_total": novo_total
-        }).eq("id", pedido_id).execute()
-
-        return jsonify({
-            "mensagem": "Item adicionado com sucesso",
-            "item": item.data[0],
-            "subtotal": subtotal
-        }), 201
-
-    except Exception as e:
-        if "duplicate key" in str(e).lower():
-            return jsonify({"erro": "Este produto já foi adicionado ao pedido"}), 409
-        return jsonify({"erro": str(e)}), 500
+    return jsonify({"ok": True})
 
 
 # -------------------------------------------------------------
