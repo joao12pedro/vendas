@@ -38,6 +38,10 @@ button:hover {
   opacity: 0.9;
 }
 
+.btn-danger {
+  background: #d32f2f;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -96,7 +100,7 @@ th {
       <tr>
         <th>Nome</th>
         <th>Preço</th>
-        <th>Ação</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody id="tabelaProdutos">
@@ -115,10 +119,11 @@ th {
         <th>Nome</th>
         <th>Preço</th>
         <th>Quantidade</th>
+        <th>Ação</th>
       </tr>
     </thead>
     <tbody id="tabelaProdutosDia">
-      <tr><td colspan="3">Carregando...</td></tr>
+      <tr><td colspan="4">Carregando...</td></tr>
     </tbody>
   </table>
 </div>
@@ -130,12 +135,7 @@ th {
 
     <p id="produtoSelecionado"></p>
 
-    <input
-      type="number"
-      id="inputQtd"
-      min="1"
-      placeholder="Quantidade"
-    >
+    <input type="number" id="inputQtd" min="1" placeholder="Quantidade">
 
     <br><br>
     <button onclick="confirmarAdicionar()">Confirmar</button>
@@ -184,6 +184,12 @@ async function carregarProdutos() {
 
   const tbody = document.getElementById("tabelaProdutos");
 
+  if (!produtos.length) {
+    tbody.innerHTML =
+      `<tr><td colspan="3">Nenhum produto cadastrado</td></tr>`;
+    return;
+  }
+
   tbody.innerHTML = produtos.map(p => `
     <tr>
       <td>${p.nome}</td>
@@ -192,9 +198,42 @@ async function carregarProdutos() {
         <button onclick="abrirModal('${p.nome}', ${p.preco})">
           Adicionar ao Dia
         </button>
+        <button class="btn-danger"
+          onclick="deletarProduto(${p.id}, '${p.nome}')">
+          Excluir
+        </button>
       </td>
     </tr>
   `).join("");
+}
+
+/* ================= DELETAR PRODUTO + PRODUTO DO DIA ================= */
+async function deletarProduto(id, nomeProduto) {
+  if (!confirm("Excluir este produto? Ele também será removido dos produtos do dia.")) return;
+
+  // 🔴 Remove produto base
+  const res = await fetch(`/produto/${id}`, { method: "DELETE" });
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.erro || "Erro ao excluir produto");
+    return;
+  }
+
+  // 🔻 Remove automaticamente dos produtos do dia
+  const resDia = await fetch("/produto_dia");
+  const produtosDia = await resDia.json();
+
+  const produtoDia = produtosDia.find(p => p.nome === nomeProduto);
+
+  if (produtoDia) {
+    await fetch(`/produto_dia/${produtoDia.id}`, {
+      method: "DELETE"
+    });
+  }
+
+  carregarProdutos();
+  carregarProdutosDia();
 }
 
 /* ================= PRODUTOS DO DIA ================= */
@@ -204,15 +243,44 @@ async function carregarProdutosDia() {
 
   const tbody = document.getElementById("tabelaProdutosDia");
 
+  if (!produtos.length) {
+    tbody.innerHTML =
+      `<tr><td colspan="4">Nenhum produto do dia</td></tr>`;
+    return;
+  }
+
   tbody.innerHTML = produtos.map(p => `
     <tr>
       <td>${p.nome}</td>
       <td>R$ ${Number(p.preco).toFixed(2)}</td>
       <td>${p.qtd}</td>
+      <td>
+        <button class="btn-danger"
+          onclick="removerProdutoDia(${p.id})">
+          Remover
+        </button>
+      </td>
     </tr>
   `).join("");
 }
 
+/* ================= REMOVER PRODUTO DO DIA ================= */
+async function removerProdutoDia(id) {
+  if (!confirm("Remover este produto do dia?")) return;
+
+  const res = await fetch(`/produto_dia/${id}`, {
+    method: "DELETE"
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.erro || "Erro ao remover produto");
+    return;
+  }
+
+  carregarProdutosDia();
+}
 
 /* ================= MODAL ================= */
 function abrirModal(nome, preco) {
@@ -245,14 +313,14 @@ async function confirmarAdicionar() {
     body: JSON.stringify({
       nome: produtoNomeAtual,
       preco: produtoPrecoAtual,
-      qtd: qtd
+      qtd
     })
   });
 
   const data = await res.json();
 
   if (!res.ok) {
-    alert(data.erro || "Erro ao adicionar produto");
+    alert(data.erro || "Erro ao adicionar");
     return;
   }
 
