@@ -1,287 +1,292 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Painel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>Painel Administrativo</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    padding: 20px;
-}
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-h1 {
-    text-align: center;
-}
-
-.tabs {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.tab {
-    padding: 10px 16px;
-    background: #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.tab.active {
-    background: #1976d2;
-    color: #fff;
-}
-
-section {
-    display: none;
-    max-width: 1100px;
-    margin: auto;
-}
-
-section.active {
-    display: block;
-}
-
-.topo {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    gap: 10px;
-}
-
-input {
-    padding: 8px;
-    width: 260px;
-}
-
-button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-fin { background: #2e7d32; color: #fff; }
-.btn-del { background: #d32f2f; color: #fff; }
-.btn-print { background: #455a64; color: #fff; }
-.btn-limpar { background: #ef6c00; color: #fff; }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-</style>
+    <style>
+        body { background-color: #f4f6f9; }
+        .card { border-radius: 12px; }
+        .table th, .table td { vertical-align: middle; }
+    </style>
 </head>
-
 <body>
 
-<h1>Painel de Pedidos</h1>
+<div class="container my-4">
+    <h2 class="fw-bold mb-4">📊 Painel Administrativo</h2>
 
-<div class="tabs">
-    <div class="tab active" onclick="abrirAba('abertos', this)">Pedidos Abertos</div>
-    <div class="tab" onclick="abrirAba('finalizados', this)">Pedidos Finalizados</div>
-    <div class="tab" onclick="abrirAba('clientes', this)">Produtos do Cliente</div>
+    <!-- ABAS -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#abertos">
+                Pedidos Abertos
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizados">
+                Pedidos Finalizados
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#produtosCliente">
+                Produtos do Cliente
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ================= PEDIDOS ABERTOS ================= -->
+        <div class="tab-pane fade show active" id="abertos">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeAbertos" class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filtrarPedidosAbertos()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAbertos"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PEDIDOS FINALIZADOS ================= -->
+        <div class="tab-pane fade" id="finalizados">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeFinalizados" class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filtrarPedidosFinalizados()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" onclick="carregarPedidosFinalizados()">🔄 Limpar</button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-primary btn-sm me-2"
+                                    onclick="imprimirPedidosFinalizados()">🖨 Imprimir</button>
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deletarPedidosFinalizados()">🗑 Deletar Todos</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaFinalizados"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PRODUTOS DO CLIENTE ================= -->
+        <div class="tab-pane fade" id="produtosCliente">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeProdutosCliente"
+                                   class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100"
+                                    onclick="filtrarProdutosCliente()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100"
+                                    onclick="carregarProdutosCliente()">🔄 Limpar</button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-info">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Produto</th>
+                                <th>Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaProdutosCliente"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
-<!-- PEDIDOS ABERTOS -->
-<section id="abertos" class="active">
-    <div class="topo">
-        <input id="buscaAbertos" placeholder="Buscar cliente">
-        <button onclick="buscarAbertos()">Buscar</button>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Data</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-abertos"></tbody>
-    </table>
-</section>
-
-<!-- FINALIZADOS -->
-<section id="finalizados">
-    <div class="topo">
-        <input id="buscaFinalizados" placeholder="Buscar cliente">
-        <div>
-            <button class="btn-print" onclick="imprimir()">Imprimir</button>
-            <button class="btn-limpar" onclick="limparFinalizados()">Limpar</button>
-        </div>
-    </div>
-
-    <table id="tabela-impressao">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Data</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-finalizados"></tbody>
-    </table>
-</section>
-
-<!-- PRODUTOS CLIENTE -->
-<section id="clientes">
-    <div class="topo">
-        <input id="buscaCliente" placeholder="Buscar cliente ou produto">
-        <div>
-            <button onclick="buscarClientes()">Buscar</button>
-            <button class="btn-del" onclick="deletarProdutosCliente()">Deletar todos</button>
-        </div>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Cliente</th>
-                <th>Produto</th>
-            </tr>
-        </thead>
-        <tbody id="tabela-clientes"></tbody>
-    </table>
-</section>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ---------- ABAS ---------- */
-function abrirAba(id, el) {
-    document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-    el.classList.add("active");
+const API = "https://vendas-svoq.onrender.com";
 
-    if (id === "abertos") carregarAbertos();
-    if (id === "finalizados") carregarFinalizados();
-    if (id === "clientes") carregarClientes();
+/* ================= PEDIDOS ABERTOS ================= */
+async function carregarPedidosAbertos() {
+    const res = await fetch(`${API}/pedidos`);
+    renderPedidosAbertos(await res.json());
 }
 
-/* ---------- ABERTOS ---------- */
-let pedidosAbertos = [];
-
-async function carregarAbertos() {
-    const r = await fetch("/pedido");
-    pedidosAbertos = await r.json();
-    renderAbertos(pedidosAbertos);
+async function filtrarPedidosAbertos() {
+    const nome = filtroNomeAbertos.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderPedidosAbertos(await res.json());
 }
 
-function renderAbertos(lista) {
-    document.getElementById("tabela-abertos").innerHTML = lista.map(p => `
+function renderPedidosAbertos(dados) {
+    tabelaAbertos.innerHTML = "";
+    if (dados.length === 0) {
+        tabelaAbertos.innerHTML =
+            `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido</td></tr>`;
+        return;
+    }
+
+    dados.forEach(p => {
+        tabelaAbertos.innerHTML += `
         <tr>
             <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
             <td>${p.data_pedido}</td>
-            <td>
-                <button class="btn-fin" onclick="finalizar(${p.id})">Finalizar</button>
-                <button class="btn-del" onclick="excluir(${p.id})">Excluir</button>
+            <td class="text-center">
+                <button class="btn btn-success btn-sm me-1"
+                        onclick="finalizarPedido(${p.id})">✔</button>
+                <button class="btn btn-danger btn-sm"
+                        onclick="excluirPedido(${p.id})">🗑</button>
             </td>
-        </tr>
-    `).join("");
+        </tr>`;
+    });
 }
 
-function buscarAbertos() {
-    const t = buscaAbertos.value.toLowerCase();
-    renderAbertos(pedidosAbertos.filter(p =>
-        p.nome_cliente.toLowerCase().includes(t)
-    ));
+async function finalizarPedido(id) {
+    if (!confirm("Finalizar pedido?")) return;
+    await fetch(`${API}/pedido/${id}/finalizar`, { method: "POST" });
+    carregarPedidosAbertos();
+    carregarPedidosFinalizados();
 }
 
-async function finalizar(id) {
-    await fetch(`/finalizar_pedido/${id}`, { method: "PUT" });
-    carregarAbertos();
+async function excluirPedido(id) {
+    if (!confirm("Excluir pedido?")) return;
+    await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
+    carregarPedidosAbertos();
 }
 
-async function excluir(id) {
-    await fetch(`/pedido/${id}`, { method: "DELETE" });
-    carregarAbertos();
+/* ================= PEDIDOS FINALIZADOS ================= */
+async function carregarPedidosFinalizados() {
+    const res = await fetch(`${API}/pedidos_finalizados`);
+    renderPedidosFinalizados(await res.json());
 }
 
-/* ---------- FINALIZADOS ---------- */
-let pedidosFinalizados = [];
-
-async function carregarFinalizados() {
-    const r = await fetch("/pedidos_finalizados");
-    pedidosFinalizados = await r.json();
-    renderFinalizados(pedidosFinalizados);
+async function filtrarPedidosFinalizados() {
+    const nome = filtroNomeFinalizados.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderPedidosFinalizados(await res.json());
 }
 
-function renderFinalizados(lista) {
-    document.getElementById("tabela-finalizados").innerHTML = lista.map(p => `
+function renderPedidosFinalizados(dados) {
+    tabelaFinalizados.innerHTML = "";
+    dados.forEach(p => {
+        tabelaFinalizados.innerHTML += `
         <tr>
-            <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
             <td>${p.data_pedido}</td>
-        </tr>
-    `).join("");
+        </tr>`;
+    });
 }
 
-function imprimir() {
-    const c = document.getElementById("tabela-impressao").outerHTML;
-    const w = window.open("", "", "width=900,height=600");
-    w.document.write(`<html><body>${c}</body></html>`);
+function imprimirPedidosFinalizados() {
+    const w = window.open("", "", "width=800,height=600");
+    w.document.write(`<h3>Pedidos Finalizados</h3>${document.querySelector("#finalizados table").outerHTML}`);
     w.print();
     w.close();
 }
 
-function limparFinalizados() {
-    fetch("/pedido/limpar", { method: "DELETE" })
-        .then(() => carregarFinalizados());
+async function deletarPedidosFinalizados() {
+    if (!confirm("Excluir todos?")) return;
+    await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
+    carregarPedidosFinalizados();
 }
 
-/* ---------- PRODUTOS CLIENTE ---------- */
-let produtosCliente = [];
-
-async function carregarClientes() {
-    const r = await fetch("/produto_cliente");
-    produtosCliente = await r.json();
-    renderClientes(produtosCliente);
+/* ================= PRODUTOS CLIENTE ================= */
+async function carregarProdutosCliente() {
+    const res = await fetch(`${API}/produtos_cliente`);
+    renderProdutosCliente(await res.json());
 }
 
-function renderClientes(lista) {
-    document.getElementById("tabela-clientes").innerHTML = lista.map(p => `
+async function filtrarProdutosCliente() {
+    const nome = filtroNomeProdutosCliente.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderProdutosCliente(await res.json());
+}
+
+function renderProdutosCliente(dados) {
+    tabelaProdutosCliente.innerHTML = "";
+    dados.forEach(p => {
+        tabelaProdutosCliente.innerHTML += `
         <tr>
             <td>${p.id}</td>
             <td>${p.cliente}</td>
             <td>${p.produto}</td>
-        </tr>
-    `).join("");
-}
-
-function buscarClientes() {
-    const t = buscaCliente.value.toLowerCase();
-    renderClientes(produtosCliente.filter(p =>
-        p.cliente.toLowerCase().includes(t) ||
-        p.produto.toLowerCase().includes(t)
-    ));
+            <td>${p.qtd}</td>
+        </tr>`;
+    });
 }
 
 async function deletarProdutosCliente() {
-    if (!confirm("Deseja apagar TODOS os produtos do cliente?")) return;
-
-    await fetch("/produto_cliente", { method: "DELETE" });
-    carregarClientes();
+    if (!confirm("Excluir todos os produtos?")) return;
+    await fetch(`${API}/produto/deletar`, { method: "DELETE" });
+    carregarProdutosCliente();
 }
 
 /* INIT */
-carregarAbertos();
+carregarPedidosAbertos();
+carregarPedidosFinalizados();
+carregarProdutosCliente();
 </script>
 
 </body>
