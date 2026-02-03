@@ -1,161 +1,217 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Home</title>
+    <meta charset="UTF-8">
+    <title>Home - Pedido</title>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  padding: 30px;
-}
-.card {
-  max-width: 800px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-}
-button {
-  padding: 6px 12px;
-  cursor: pointer;
-}
-button:disabled {
-  opacity: 0.5;
-}
-</style>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
+<body class="bg-light">
 
-<body>
+<div class="container mt-4">
 
-<div class="card">
-  <h2>Criar Pedido</h2>
+    <h2 class="mb-4">🛒 Novo Pedido</h2>
 
-  <input id="nomeCliente" placeholder="Nome do cliente">
-  <button onclick="criarPedido()">Criar Pedido</button>
+    <!-- Nome do cliente -->
+    <div class="mb-3">
+        <label class="form-label">Nome do Cliente</label>
+        <input
+            type="text"
+            id="nomeCliente"
+            class="form-control"
+            placeholder="Digite o nome">
+    </div>
 
-  <p id="msg"></p>
+    <!-- Produtos do dia -->
+    <h4 class="mt-4">Produtos do Dia</h4>
 
-  <hr>
+    <table class="table table-bordered mt-2">
+        <thead class="table-light">
+            <tr>
+                <th>Produto</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th class="text-center">Quantidade</th>
+            </tr>
+        </thead>
+        <tbody id="listaProdutos"></tbody>
+    </table>
 
-  <h3>Produtos do Dia</h3>
+    <!-- Itens do pedido -->
+    <h4 class="mt-4">Itens do Pedido</h4>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+            </tr>
+        </thead>
+        <tbody id="itensPedido"></tbody>
+    </table>
 
-  <table border="1" width="100%">
-    <thead>
-      <tr>
-        <th>Produto</th>
-        <th>Preço</th>
-        <th>Qtd</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody id="listaProdutos">
-      <tr><td colspan="4">Carregando...</td></tr>
-    </tbody>
-  </table>
+    <button class="btn btn-primary mt-3" onclick="criarPedido()">
+        Criar Pedido
+    </button>
+
 </div>
 
 <script>
-let pedidoCriado = false;
+const BASE_URL = "http://127.0.0.1:5000";
 
-/* ================= NORMALIZAR NOME ================= */
-function normalizarNome(nome) {
-  return nome.trim().replace(/\s+/g, " ").toUpperCase();
-}
+let produtosDia = [];
+let produtosSelecionados = [];
 
-/* ================= CRIAR PEDIDO ================= */
-async function criarPedido() {
-  const nome = normalizarNome(
-    document.getElementById("nomeCliente").value
-  );
-
-  if (!nome) {
-    alert("Digite o nome do cliente");
-    return;
-  }
-
-  const res = await fetch("/pedido", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ nome_cliente: nome })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.erro || "Erro ao criar pedido");
-    return;
-  }
-
-  pedidoCriado = true;
-  document.getElementById("msg").innerText =
-    `Pedido criado para ${nome}`;
-}
-
-/* ================= LISTAR PRODUTOS DO DIA ================= */
+/* ===============================
+   PRODUTOS DO DIA
+================================ */
 async function carregarProdutosDia() {
-  const res = await fetch("/produtos_dia");
+    const resp = await fetch(`${BASE_URL}/produto_dia`);
+    produtosDia = await resp.json();
 
-  if (!res.ok) {
-    console.error("Erro ao buscar produtos do dia");
-    return;
-  }
+    const tbody = document.getElementById("listaProdutos");
+    tbody.innerHTML = "";
 
-  const produtos = await res.json();
-  const tbody = document.getElementById("listaProdutos");
+    produtosDia.forEach(p => {
+        const item = produtosSelecionados.find(i => i.produto_id === p.id);
+        const qtdSelecionada = item ? item.quantidade : 0;
 
-  if (!Array.isArray(produtos) || produtos.length === 0) {
-    tbody.innerHTML =
-      "<tr><td colspan='4'>Nenhum produto disponível</td></tr>";
-    return;
-  }
+        const disabledMais = p.qtd <= qtdSelecionada ? "disabled" : "";
 
-  tbody.innerHTML = produtos.map(p => `
-    <tr>
-      <td>${p.nome}</td>
-      <td>R$ ${Number(p.preco).toFixed(2)}</td>
-      <td>${p.qtd}</td>
-      <td>
-        <button
-          onclick="adicionarProduto('${p.nome}')"
-          ${p.qtd <= 0 ? "disabled" : ""}
-        >
-          ${p.qtd <= 0 ? "Esgotado" : "Adicionar"}
-        </button>
-      </td>
-    </tr>
-  `).join("");
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.nome}</td>
+                <td>R$ ${p.preco.toFixed(2)}</td>
+                <td>${p.qtd}</td>
+                <td class="text-center">
+                    <button class="btn btn-outline-danger btn-sm"
+                        onclick="alterarQuantidade(${p.id}, '${p.nome}', -1)">
+                        −
+                    </button>
+
+                    <span class="mx-2 fw-bold">${qtdSelecionada}</span>
+
+                    <button class="btn btn-outline-success btn-sm"
+                        ${disabledMais}
+                        onclick="alterarQuantidade(${p.id}, '${p.nome}', 1)">
+                        +
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
 }
 
-/* ================= ADICIONAR PRODUTO ================= */
-async function adicionarProduto(nomeProduto) {
-  if (!pedidoCriado) {
-    alert("Crie o pedido primeiro");
-    return;
-  }
+/* ===============================
+   ALTERAR QUANTIDADE
+================================ */
+function alterarQuantidade(id, nome, delta) {
+    const produto = produtosDia.find(p => p.id === id);
+    let item = produtosSelecionados.find(p => p.produto_id === id);
 
-  const cliente = normalizarNome(
-    document.getElementById("nomeCliente").value
-  );
+    if (!item && delta > 0) {
+        produtosSelecionados.push({
+            produto_id: id,
+            nome,
+            quantidade: 1
+        });
+    } else if (item) {
+        item.quantidade += delta;
 
-  const res = await fetch("/adicionar_item", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      cliente,
-      produto: nomeProduto
-    })
-  });
+        if (item.quantidade > produto.qtd) {
+            item.quantidade = produto.qtd;
+        }
 
-  const data = await res.json();
+        if (item.quantidade <= 0) {
+            produtosSelecionados = produtosSelecionados.filter(
+                p => p.produto_id !== id
+            );
+        }
+    }
 
-  if (!res.ok) {
-    alert(data.erro);
-    return;
-  }
+    renderizarItens();
+    carregarProdutosDia();
+}
 
-  carregarProdutosDia();
+/* ===============================
+   RENDERIZAR ITENS
+================================ */
+function renderizarItens() {
+    const tbody = document.getElementById("itensPedido");
+    tbody.innerHTML = "";
+
+    produtosSelecionados.forEach(p => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${p.nome}</td>
+                <td>${p.quantidade}</td>
+            </tr>
+        `;
+    });
+}
+
+/* ===============================
+   CRIAR PEDIDO
+================================ */
+async function criarPedido() {
+    const cliente = document
+        .getElementById("nomeCliente")
+        .value
+        .trim()
+        .toUpperCase(); // 👈 SALVA EM MAIÚSCULO
+
+    if (!cliente) {
+        alert("Nome obrigatório");
+        return;
+    }
+
+    if (produtosSelecionados.length === 0) {
+        alert("Selecione produtos");
+        return;
+    }
+
+    /* 1️⃣ Produtos do cliente */
+    for (const item of produtosSelecionados) {
+        await fetch(`${BASE_URL}/produtos_cliente`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                cliente: cliente,
+                produto: item.nome,
+                qtd: item.quantidade
+            })
+        });
+    }
+
+    /* 2️⃣ Cria pedido */
+    const payload = {
+        nome_cliente: cliente,
+        produtos: produtosSelecionados.map(p => ({
+            produto_id: p.produto_id,
+            quantidade: p.quantidade
+        }))
+    };
+
+    const resp = await fetch(`${BASE_URL}/pedido`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+        alert(data.erro || "Erro ao criar pedido");
+        return;
+    }
+
+    alert("✅ Pedido criado com sucesso!");
+
+    /* Reset */
+    produtosSelecionados = [];
+    document.getElementById("nomeCliente").value = "";
+    renderizarItens();
+    carregarProdutosDia();
 }
 
 /* INIT */
