@@ -162,6 +162,13 @@
 <script>
 const API = "https://vendas-svoq.onrender.com";
 
+/* ===== FUNÇÃO GLOBAL PARA DATA BR ===== */
+function formatarDataBR(data) {
+    if (!data) return "";
+    const d = new Date(data);
+    return d.toLocaleDateString("pt-BR");
+}
+
 /* ================= PEDIDOS ABERTOS ================= */
 async function carregarPedidosAbertos() {
     const res = await fetch(`${API}/pedidos`);
@@ -189,7 +196,7 @@ function renderPedidosAbertos(dados) {
             <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
-            <td>${p.data_pedido}</td>
+            <td>${formatarDataBR(p.data_pedido)}</td>
             <td class="text-center">
                 <button class="btn btn-success btn-sm me-1"
                         onclick="finalizarPedido(${p.id})">✔</button>
@@ -200,12 +207,31 @@ function renderPedidosAbertos(dados) {
     });
 }
 
+const dataAtual = new Date();
+
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+    const ano = dataAtual.getFullYear();
+
+    const dataFormatada = `${dia}/${mes}/${ano}`;
+    console.log(dataFormatada); // Ex: 04/02/2026
 async function finalizarPedido(id) {
     if (!confirm("Finalizar pedido?")) return;
-    await fetch(`${API}/pedido/${id}/finalizar`, { method: "POST" });
+
+
+
+    await fetch(`${API}/pedido/${id}/finalizar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            data_finalizacao: dataFormatada
+        })
+    });
+
     carregarPedidosAbertos();
     carregarPedidosFinalizados();
 }
+
 
 async function excluirPedido(id) {
     if (!confirm("Excluir pedido?")) return;
@@ -233,16 +259,40 @@ function renderPedidosFinalizados(dados) {
         <tr>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
-            <td>${p.data_pedido}</td>
+            <td>${formatarDataBR(dataAtual)}</td>
         </tr>`;
     });
 }
 
 function imprimirPedidosFinalizados() {
-    const w = window.open("", "", "width=800,height=600");
-    w.document.write(`<h3>Pedidos Finalizados</h3>${document.querySelector("#finalizados table").outerHTML}`);
-    w.print();
-    w.close();
+    const tabela = document.querySelector("#finalizados table").outerHTML;
+
+    const janela = window.open("", "", "width=900,height=700");
+
+    janela.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-br">
+        <head>
+            <meta charset="UTF-8">
+            <title>Pedidos Finalizados</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h2 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #e9ecef; }
+            </style>
+        </head>
+        <body>
+            <h2>Pedidos Finalizados</h2>
+            ${tabela}
+        </body>
+        </html>
+    `);
+
+    janela.document.close();
+    janela.print();
+    janela.close();
 }
 
 async function deletarPedidosFinalizados() {
