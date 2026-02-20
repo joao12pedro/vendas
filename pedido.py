@@ -13,7 +13,7 @@ def criar_pedido():
     data = request.get_json()
 
     nome_cliente = data.get("nome_cliente")
-    produtos = data.get("produtos")  # [{produto_id, quantidade}]
+    produtos = data.get("produtos")
 
     if not nome_cliente:
         return jsonify({"erro": "Nome do cliente obrigatório"}), 400
@@ -22,24 +22,25 @@ def criar_pedido():
         return jsonify({"erro": "Pedido sem produtos"}), 400
 
     supabase = connect_db()
-    valor_total = 0
+    valor_total = 0.0
 
     try:
         # 🔹 CRIA PEDIDO
         pedido = supabase.table("pedido").insert({
             "nome_cliente": nome_cliente,
-            "valor_total": 0,
+            "valor_total": 0.00,
             "data_pedido": date.today().isoformat()
         }).execute()
 
         pedido_id = pedido.data[0]["id"]
 
         itens = []
+        valor_total_calculado = 0.0
 
         # 🔹 PROCESSA PRODUTOS
         for item in produtos:
             produto_id = item.get("produto_id")
-            quantidade = int(item.get("quantidade", 1))
+            quantidade = float(item.get("quantidade", 1))
 
             if not produto_id or quantidade <= 0:
                 continue
@@ -62,14 +63,16 @@ def criar_pedido():
                 }), 400
 
             preco = float(prod_dia.data["preco"])
-            subtotal = preco * quantidade
-            valor_total += subtotal
+            subtotal = round(preco * quantidade, 2)
+            valor_total_calculado = round(valor_total_calculado + subtotal, 2)
 
+            # 🔥 IMPORTANTE: NÃO incluir 'subtotal' aqui!
             itens.append({
                 "pedido_id": pedido_id,
                 "produto_id": produto_id,
                 "quantidade": quantidade,
                 "preco_unitario": preco
+                # NÃO ADICIONE 'subtotal' - essa coluna não existe!
             })
 
             # 🔻 BAIXA ESTOQUE
@@ -80,24 +83,45 @@ def criar_pedido():
         if not itens:
             return jsonify({"erro": "Pedido sem itens válidos"}), 400
 
-        # 🔹 INSERE ITENS
+        # 🔹 INSERE ITENS (sem a coluna subtotal)
         supabase.table("itens_pedido").insert(itens).execute()
 
         # 🔹 ATUALIZA TOTAL
         supabase.table("pedido").update({
-            "valor_total": valor_total
+            "valor_total": valor_total_calculado
         }).eq("id", pedido_id).execute()
+
+        # 🔹 INSERE NA TABELA produto_cliente
+        for item in produtos:
+            produto_id = item.get("produto_id")
+            quantidade = float(item.get("quantidade", 1))
+
+            # Busca o nome do produto
+            prod_dia = (
+                supabase
+                .table("produto_dia")
+                .select("nome")
+                .eq("id", produto_id)
+                .single()
+                .execute()
+            )
+
+            if prod_dia.data:
+                supabase.table("produto_cliente").insert({
+                    "cliente": nome_cliente,
+                    "produto": prod_dia.data["nome"],
+                    "qtd": quantidade
+                }).execute()
 
         return jsonify({
             "mensagem": "Pedido criado com sucesso",
             "pedido_id": pedido_id,
-            "valor_total": valor_total
+            "valor_total": valor_total_calculado,
+            "itens": len(itens)
         }), 201
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
-
-
 # --------------------------------------------------
 # 📌 GET /pedido — LISTAR PEDIDOS
 # --------------------------------------------------
