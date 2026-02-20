@@ -57,10 +57,20 @@
 </div>
 
 <script>
-const BASE_URL = "https://vendas-svoq.onrender.com";
+const BASE_URL = "http://127.0.0.1:5000";
 
 let produtosDia = [];
 let produtosSelecionados = [];
+
+// Função para verificar se o produto é Coxa/Sobrecoxa
+function isCoxaSobrecoxa(nome) {
+    return nome && nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
+}
+
+// Função para obter o incremento baseado no produto
+function getIncremento(nome) {
+    return isCoxaSobrecoxa(nome) ? 0.25 : 1;
+}
 
 /* ===============================
    PRODUTOS DO DIA
@@ -75,8 +85,14 @@ async function carregarProdutosDia() {
     produtosDia.forEach(p => {
         const item = produtosSelecionados.find(i => i.produto_id === p.id);
         const qtdSelecionada = item ? item.quantidade : 0;
+        const incremento = getIncremento(p.nome);
 
-        const disabledMais = p.qtd <= qtdSelecionada ? "disabled" : "";
+        // Verifica se pode incrementar (considerando estoque e incremento específico)
+        const podeIncrementar = (qtdSelecionada + incremento) <= p.qtd;
+        const disabledMais = !podeIncrementar ? "disabled" : "";
+
+        // Formata a exibição da quantidade com 2 casas decimais para todos
+        const qtdDisplay = qtdSelecionada.toFixed(2);
 
         tbody.innerHTML += `
             <tr>
@@ -85,15 +101,15 @@ async function carregarProdutosDia() {
                 <td>${p.qtd}</td>
                 <td class="text-center">
                     <button class="btn btn-outline-danger btn-sm"
-                        onclick="alterarQuantidade(${p.id}, '${p.nome}', -1)">
+                        onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
                         −
                     </button>
 
-                    <span class="mx-2 fw-bold">${qtdSelecionada}</span>
+                    <span class="mx-2 fw-bold">${qtdDisplay}</span>
 
                     <button class="btn btn-outline-success btn-sm"
                         ${disabledMais}
-                        onclick="alterarQuantidade(${p.id}, '${p.nome}', 1)">
+                        onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">
                         +
                     </button>
                 </td>
@@ -113,19 +129,26 @@ function alterarQuantidade(id, nome, delta) {
         produtosSelecionados.push({
             produto_id: id,
             nome,
-            quantidade: 1
+            quantidade: Math.abs(delta)
         });
     } else if (item) {
-        item.quantidade += delta;
+        // Calcula nova quantidade
+        let novaQuantidade = item.quantidade + delta;
 
-        if (item.quantidade > produto.qtd) {
-            item.quantidade = produto.qtd;
+        // Arredonda para evitar problemas de ponto flutuante (sempre 2 casas decimais)
+        novaQuantidade = Math.round(novaQuantidade * 100) / 100;
+
+        // Verifica limites
+        if (novaQuantidade > produto.qtd) {
+            novaQuantidade = produto.qtd;
         }
 
-        if (item.quantidade <= 0) {
+        if (novaQuantidade <= 0) {
             produtosSelecionados = produtosSelecionados.filter(
                 p => p.produto_id !== id
             );
+        } else {
+            item.quantidade = novaQuantidade;
         }
     }
 
@@ -141,10 +164,13 @@ function renderizarItens() {
     tbody.innerHTML = "";
 
     produtosSelecionados.forEach(p => {
+        // Formata a exibição da quantidade com 2 casas decimais para todos
+        const qtdDisplay = p.quantidade.toFixed(2);
+
         tbody.innerHTML += `
             <tr>
                 <td>${p.nome}</td>
-                <td>${p.quantidade}</td>
+                <td>${qtdDisplay}</td>
             </tr>
         `;
     });
@@ -158,7 +184,7 @@ async function criarPedido() {
         .getElementById("nomeCliente")
         .value
         .trim()
-        .toUpperCase(); // 👈 SALVA EM MAIÚSCULO
+        .toUpperCase();
 
     if (!cliente) {
         alert("Nome obrigatório");
@@ -170,9 +196,20 @@ async function criarPedido() {
         return;
     }
 
+    // Validação: verificar se todas as quantidades são números válidos
+    for (const item of produtosSelecionados) {
+        // Garantir que a quantidade seja um número com no máximo 2 casas decimais
+        item.quantidade = Math.round(item.quantidade * 100) / 100;
+
+        if (item.quantidade <= 0) {
+            alert(`Quantidade inválida para o produto ${item.nome}`);
+            return;
+        }
+    }
+
     /* 1️⃣ Produtos do cliente */
     for (const item of produtosSelecionados) {
-        await fetch(`${BASE_URL}/produtos_cliente`, {
+        const response = await fetch(`${BASE_URL}/produtos_cliente`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -181,6 +218,12 @@ async function criarPedido() {
                 qtd: item.quantidade
             })
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            alert(errorData.erro || `Erro ao adicionar produto ${item.nome}`);
+            return;
+        }
     }
 
     /* 2️⃣ Cria pedido */
@@ -192,26 +235,32 @@ async function criarPedido() {
         }))
     };
 
-    const resp = await fetch(`${BASE_URL}/pedido`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
+    try {
+        const resp = await fetch(`${BASE_URL}/pedido`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-    const data = await resp.json();
+        const data = await resp.json();
 
-    if (!resp.ok) {
-        alert(data.erro || "Erro ao criar pedido");
-        return;
+        if (!resp.ok) {
+            alert(data.erro || "Erro ao criar pedido");
+            return;
+        }
+
+        alert("✅ Pedido criado com sucesso!");
+
+        /* Reset */
+        produtosSelecionados = [];
+        document.getElementById("nomeCliente").value = "";
+        renderizarItens();
+        carregarProdutosDia();
+
+    } catch (error) {
+        alert("Erro de conexão com o servidor");
+        console.error(error);
     }
-
-    alert("✅ Pedido criado com sucesso!");
-
-    /* Reset */
-    produtosSelecionados = [];
-    document.getElementById("nomeCliente").value = "";
-    renderizarItens();
-    carregarProdutosDia();
 }
 
 /* INIT */
@@ -220,4 +269,3 @@ carregarProdutosDia();
 
 </body>
 </html>
-
