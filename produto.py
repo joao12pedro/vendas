@@ -51,6 +51,33 @@ def deletar_produto(id):
         return jsonify({"erro": str(e)}), 500
 
 
+@produto_bp.route("/produto_cliente/<int:id>", methods=["DELETE"])
+def deletar_produto_cliente(id):
+    supabase = connect_db()
+
+    try:
+        # Tenta deletar o produto pelo ID
+        response = supabase.table("produto_cliente").delete().eq("id", id).execute()
+
+        # Verifica se algum registro foi deletado
+        if response.data:
+            return jsonify({
+                "mensagem": f"Produto {id} excluído com sucesso",
+                "deletado": True
+            }), 200
+        else:
+            return jsonify({
+                "erro": f"Produto com ID {id} não encontrado",
+                "deletado": False
+            }), 404
+
+    except Exception as e:
+        return jsonify({
+            "erro": f"Erro ao excluir produto: {str(e)}",
+            "deletado": False
+        }), 500
+
+
 # =====================================================
 # 📌 PRODUTO DO DIA (com quantidade)
 # =====================================================
