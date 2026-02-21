@@ -69,40 +69,53 @@ function isCoxaSobrecoxa(nome) {
 
 // Função para obter o incremento baseado no produto
 function getIncremento(nome) {
-    // Coxa/Sobrecoxa: 0.1666666666666667 (1/6), outros: 1
-    return isCoxaSobrecoxa(nome) ? 0.1666666666666667 : 1;
+    // Coxa/Sobrecoxa: 0.0833333333333333 (1/12), outros: 1
+    return isCoxaSobrecoxa(nome) ? 0.0833333333333333 : 1;
 }
 
-// Função para arredondar para múltiplos de 1/6 quando for Coxa/Sobrecoxa
+// Função para arredondar para múltiplos de 1/12 quando for Coxa/Sobrecoxa
 function arredondarParaFracao(valor, nome) {
     if (isCoxaSobrecoxa(nome)) {
-        // Arredonda para o múltiplo mais próximo de 0.1666666666666667
-        const incremento = 0.1666666666666667;
+        // Arredonda para o múltiplo mais próximo de 0.0833333333333333
+        const incremento = 0.0833333333333333;
         const multiplos = Math.round(valor / incremento);
         return multiplos * incremento;
     }
     return valor;
 }
 
-// Função para formatar a quantidade de Coxa/Sobrecoxa como fração de sextos
+// Função para formatar a quantidade de Coxa/Sobrecoxa como fração de doze avos
 function formatarQuantidadeCoxaSobrecoxa(valor) {
-    const sextos = Math.round(valor / 0.1666666666666667);
-    const inteiros = Math.floor(sextos / 6);
-    const resto = sextos % 6;
+    const dozeAvos = Math.round(valor / 0.0833333333333333);
+    const inteiros = Math.floor(dozeAvos / 12);
+    const resto = dozeAvos % 12;
 
+    // Simplificar frações quando possível
     let fracao = "";
     if (resto === 0) {
         fracao = "";
     } else if (resto === 1) {
-        fracao = "1/6";
+        fracao = "1/12";
     } else if (resto === 2) {
-        fracao = "1/3";
+        fracao = "1/6";
     } else if (resto === 3) {
-        fracao = "1/2";
+        fracao = "1/4";
     } else if (resto === 4) {
-        fracao = "2/3";
+        fracao = "1/3";
     } else if (resto === 5) {
+        fracao = "5/12";
+    } else if (resto === 6) {
+        fracao = "1/2";
+    } else if (resto === 7) {
+        fracao = "7/12";
+    } else if (resto === 8) {
+        fracao = "2/3";
+    } else if (resto === 9) {
+        fracao = "3/4";
+    } else if (resto === 10) {
         fracao = "5/6";
+    } else if (resto === 11) {
+        fracao = "11/12";
     }
 
     if (inteiros === 0) {
@@ -182,7 +195,7 @@ function alterarQuantidade(id, nome, delta) {
     let item = produtosSelecionados.find(p => p.produto_id === id);
 
     if (!item && delta > 0) {
-        // Para Coxa/Sobrecoxa, a quantidade inicial é o incremento (1/6)
+        // Para Coxa/Sobrecoxa, a quantidade inicial é o incremento (1/12)
         let quantidadeInicial = Math.abs(delta);
         if (isCoxaSobrecoxa(nome)) {
             quantidadeInicial = arredondarParaFracao(quantidadeInicial, nome);
@@ -196,7 +209,7 @@ function alterarQuantidade(id, nome, delta) {
         // Calcula nova quantidade
         let novaQuantidade = item.quantidade + delta;
 
-        // Para Coxa/Sobrecoxa, arredonda para o múltiplo mais próximo de 1/6
+        // Para Coxa/Sobrecoxa, arredonda para o múltiplo mais próximo de 1/12
         if (isCoxaSobrecoxa(nome)) {
             novaQuantidade = arredondarParaFracao(novaQuantidade, nome);
         } else {
@@ -277,7 +290,7 @@ async function criarPedido() {
     // Validação e ajuste das quantidades
     for (const item of produtosSelecionados) {
         if (isCoxaSobrecoxa(item.nome)) {
-            // Garantir que a quantidade seja um múltiplo de 1/6
+            // Garantir que a quantidade seja um múltiplo de 1/12
             item.quantidade = arredondarParaFracao(item.quantidade, item.nome);
         } else {
             // Garantir que a quantidade seja um número com no máximo 2 casas decimais
