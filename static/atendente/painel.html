@@ -11,6 +11,32 @@
         body { background-color: #f4f6f9; }
         .card { border-radius: 12px; }
         .table th, .table td { vertical-align: middle; }
+        .badge-duplicata {
+            background-color: #dc3545;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        .badge-original {
+            background-color: #28a745;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+        .duplicata-removida {
+            background-color: #f8d7da;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .loading {
+            cursor: wait;
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -55,7 +81,14 @@
                         <div class="col-md-2">
                             <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
                         </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-warning btn-sm" onclick="verificarDuplicatasAbertos()">
+                                🔍 Verificar Duplicatas
+                            </button>
+                        </div>
                     </div>
+
+                    <div class="alert alert-info small" id="infoDuplicatasAbertos" style="display: none;"></div>
 
                     <table class="table table-bordered table-hover table-sm">
                         <thead class="table-dark">
@@ -98,9 +131,12 @@
                         </div>
                     </div>
 
+                    <div class="alert alert-info small" id="infoDuplicatasFinalizados" style="display: none;"></div>
+
                     <table class="table table-bordered table-hover table-sm">
                         <thead class="table-success">
                             <tr>
+                                <th>ID</th>
                                 <th>Cliente</th>
                                 <th>Valor</th>
                                 <th>Data</th>
@@ -133,9 +169,16 @@
                                     onclick="carregarProdutosCliente()">🔄 Limpar</button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm"
+                            <button class="btn btn-danger btn-sm me-2"
                                     onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
+                            <button class="btn btn-success btn-sm"
+                                    onclick="removerTodasDuplicatas()">✨ Remover Duplicatas</button>
                         </div>
+                    </div>
+
+                    <div class="alert alert-warning small" id="infoDuplicatas" style="display: none;">
+                        <strong>⚠️ Duplicatas encontradas!</strong>
+                        <span id="contadorDuplicatas"></span>
                     </div>
 
                     <table class="table table-bordered table-hover table-sm">
@@ -145,6 +188,8 @@
                                 <th>Cliente</th>
                                 <th>Produto</th>
                                 <th>Qtd</th>
+                                <th>Status</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaProdutosCliente"></tbody>
@@ -160,38 +205,363 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const API = "https://vendas-svoq.onrender.com";
+const API = "http://127.0.0.1:5000";
 
 /* ===== FUNÇÃO GLOBAL PARA DATA BR ===== */
 function formatarDataBR(data) {
     if (!data) return "";
-    const d = new Date(data);
-    return d.toLocaleDateString("pt-BR");
+    if (typeof data === 'string' && data.includes('-')) {
+        const partes = data.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+    try {
+        const d = new Date(data);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString("pt-BR");
+        }
+    } catch (e) {
+        console.error("Erro ao formatar data:", e);
+    }
+    return data || "";
+}
+
+/* ===== FUNÇÃO PARA IDENTIFICAR DUPLICATAS DE PRODUTOS DO CLIENTE ===== */
+function identificarDuplicatasProdutosCliente(dados) {
+    const mapa = new Map(); // Para identificar os originais (maior ID)
+
+    // Primeiro, encontrar o maior ID para cada combinação cliente+produto
+    dados.forEach(item => {
+        const chave = `${item.cliente}|${item.produto}`;
+
+        if (!mapa.has(chave) || mapa.get(chave).id < item.id) {
+            mapa.set(chave, item);
+        }
+    });
+
+    // Agora, identificar duplicatas
+    dados.forEach(item => {
+        const chave = `${item.cliente}|${item.produto}`;
+        const original = mapa.get(chave);
+
+        if (original.id === item.id) {
+            item.status = 'original';
+        } else {
+            item.status = 'duplicata';
+        }
+    });
+
+    return {
+        duplicatas: dados.filter(item => item.status === 'duplicata'),
+        todos: dados.sort((a, b) => {
+            if (a.cliente < b.cliente) return -1;
+            if (a.cliente > b.cliente) return 1;
+            if (a.produto < b.produto) return -1;
+            if (a.produto > b.produto) return 1;
+            return b.id - a.id;
+        })
+    };
+}
+
+/* ===== FUNÇÃO PARA REMOVER TODAS AS DUPLICATAS ===== */
+async function removerTodasDuplicatas() {
+    if (!confirm("Deseja remover TODAS as duplicatas, mantendo apenas o registro mais recente de cada produto por cliente?")) {
+        return;
+    }
+
+    // Adiciona classe de loading ao body
+    document.body.classList.add('loading');
+
+    try {
+        // Desabilita o botão durante o processo
+        const btnRemover = event.target;
+        const textoOriginal = btnRemover.innerHTML;
+        btnRemover.innerHTML = '⏳ Removendo...';
+        btnRemover.disabled = true;
+
+        console.log("🔍 Buscando produtos para identificar duplicatas...");
+
+        // PASSO 1: Buscar todos os produtos
+        const res = await fetch(`${API}/produtos_cliente`);
+        if (!res.ok) throw new Error("Erro ao carregar produtos");
+        const dados = await res.json();
+
+        console.log(`📊 Total de registros: ${dados.length}`);
+
+        // PASSO 2: Identificar os maiores IDs por cliente+produto
+        const mapaMaioresIds = new Map();
+
+        dados.forEach(item => {
+            const chave = `${item.cliente}|${item.produto}`;
+            if (!mapaMaioresIds.has(chave) || mapaMaioresIds.get(chave) < item.id) {
+                mapaMaioresIds.set(chave, item.id);
+            }
+        });
+
+        // PASSO 3: Identificar quais IDs são duplicatas
+        const idsManter = new Set(mapaMaioresIds.values());
+        const idsRemover = dados
+            .filter(item => !idsManter.has(item.id))
+            .map(item => item.id);
+
+        console.log(`🟢 IDs a manter (${idsManter.size}):`, [...idsManter]);
+        console.log(`🔴 IDs a remover (${idsRemover.length}):`, idsRemover);
+
+        if (idsRemover.length === 0) {
+            alert("✅ Nenhuma duplicata encontrada!");
+            btnRemover.innerHTML = textoOriginal;
+            btnRemover.disabled = false;
+            document.body.classList.remove('loading');
+            return;
+        }
+
+        // PASSO 4: Confirmar novamente com o usuário
+        if (!confirm(`Serão removidos ${idsRemover.length} registros duplicados. Continuar?`)) {
+            btnRemover.innerHTML = textoOriginal;
+            btnRemover.disabled = false;
+            document.body.classList.remove('loading');
+            return;
+        }
+
+        // PASSO 5: REMOVER AS DUPLICATAS
+        let removidas = 0;
+        let falhas = 0;
+
+        for (const id of idsRemover) {
+            try {
+                console.log(`Tentando remover ID ${id}...`);
+
+                // Tenta o endpoint específico para um produto
+                const response = await fetch(`${API}/produto_cliente/${id}`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (response.ok) {
+                    removidas++;
+                    console.log(`✅ ID ${id} removido com sucesso`);
+                } else {
+                    // Se falhar, tenta endpoint alternativo
+                    console.log(`⚠️ Tentando endpoint alternativo para ID ${id}...`);
+
+                    const response2 = await fetch(`${API}/produto_cliente/${id}`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" }
+                    });
+
+                    if (response2.ok) {
+                        removidas++;
+                        console.log(`✅ ID ${id} removido com sucesso (endpoint alternativo)`);
+                    } else {
+                        falhas++;
+                        console.error(`❌ Falha ao remover ID ${id}`);
+                    }
+                }
+            } catch (error) {
+                falhas++;
+                console.error(`❌ Erro ao remover ID ${id}:`, error);
+            }
+
+            // Pequena pausa para não sobrecarregar o servidor
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        // PASSO 6: Mostrar resultado
+        if (falhas === 0) {
+            alert(`✅ ${removidas} duplicatas removidas com sucesso!`);
+        } else {
+            alert(`⚠️ ${removidas} duplicatas removidas, ${falhas} falhas. Verifique o console para detalhes.`);
+        }
+
+        // Recarrega a lista
+        await carregarProdutosCliente();
+
+        // Restaura o botão
+        btnRemover.innerHTML = textoOriginal;
+        btnRemover.disabled = false;
+
+    } catch (error) {
+        console.error("Erro ao remover duplicatas:", error);
+        alert("❌ Erro ao remover duplicatas: " + error.message);
+
+        const btnRemover = event.target;
+        btnRemover.innerHTML = '✨ Remover Duplicatas';
+        btnRemover.disabled = false;
+    } finally {
+        // Remove classe de loading
+        document.body.classList.remove('loading');
+    }
+}
+
+/* ================= PRODUTOS CLIENTE ================= */
+async function carregarProdutosCliente() {
+    try {
+        const res = await fetch(`${API}/produtos_cliente`);
+        if (!res.ok) throw new Error("Erro ao carregar produtos");
+        const dados = await res.json();
+
+        // Identifica duplicatas
+        const resultado = identificarDuplicatasProdutosCliente(dados);
+
+        // Atualiza informações de duplicatas
+        const infoDiv = document.getElementById("infoDuplicatas");
+        const contadorSpan = document.getElementById("contadorDuplicatas");
+
+        if (resultado.duplicatas.length > 0) {
+            infoDiv.style.display = "block";
+            contadorSpan.innerHTML = `${resultado.duplicatas.length} duplicata(s) encontrada(s).`;
+
+            // Log detalhado no console
+            console.warn(`🔴 ${resultado.duplicatas.length} duplicata(s) encontradas:`);
+            resultado.duplicatas.forEach(dup => {
+                console.warn(`   ID ${dup.id}: ${dup.cliente} - ${dup.produto} (${dup.qtd})`);
+            });
+        } else {
+            infoDiv.style.display = "none";
+        }
+
+        renderProdutosCliente(resultado.todos);
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao carregar produtos do cliente");
+    }
+}
+
+async function filtrarProdutosCliente() {
+    const nome = document.getElementById("filtroNomeProdutosCliente").value.trim();
+    if (!nome) return alert("Digite o nome");
+    try {
+        const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error("Erro ao filtrar");
+        const dados = await res.json();
+
+        const resultado = identificarDuplicatasProdutosCliente(dados);
+        renderProdutosCliente(resultado.todos);
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao filtrar produtos");
+    }
+}
+
+function renderProdutosCliente(dados) {
+    const tabela = document.getElementById("tabelaProdutosCliente");
+    tabela.innerHTML = "";
+
+    if (dados.length === 0) {
+        tabela.innerHTML =
+            `<tr><td colspan="6" class="text-center text-muted">Nenhum produto encontrado</td></tr>`;
+        return;
+    }
+
+    dados.forEach(item => {
+        // Formata a quantidade
+        let qtdFormatada = Number(item.qtd).toFixed(2);
+        let classeLinha = "";
+        let badgeStatus = "";
+        let botoesAcao = "";
+
+        if (item.status === 'original') {
+            badgeStatus = '<span class="badge bg-success">Original</span>';
+            botoesAcao = `
+                <button class="btn btn-info btn-sm" onclick="verDetalhesProduto(${item.id})">👁️</button>
+            `;
+        } else if (item.status === 'duplicata') {
+            classeLinha = 'duplicata-removida';
+            badgeStatus = '<span class="badge bg-danger">Duplicata</span>';
+            botoesAcao = `
+                <button class="btn btn-danger btn-sm" onclick="excluirProduto(${item.id})">🗑 Excluir</button>
+            `;
+        }
+
+        tabela.innerHTML += `
+        <tr class="${classeLinha}">
+            <td>${item.id}</td>
+            <td>${item.cliente}</td>
+            <td>${item.produto}</td>
+            <td>${qtdFormatada}</td>
+            <td>${badgeStatus}</td>
+            <td class="text-center">${botoesAcao}</td>
+        </tr>`;
+    });
+}
+
+async function excluirProduto(id) {
+    if (!confirm(`Excluir produto ID ${id}?`)) return;
+
+    try {
+        const response = await fetch(`${API}/produto_cliente/${id}`, { method: "DELETE" });
+
+        if (!response.ok) {
+            throw new Error("Erro ao excluir produto");
+        }
+
+        await carregarProdutosCliente();
+        alert(`Produto ${id} excluído com sucesso!`);
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao excluir produto. Verifique se o endpoint existe.");
+    }
+}
+
+function verDetalhesProduto(id) {
+    alert(`Detalhes do produto ID: ${id}`);
+}
+
+async function deletarProdutosCliente() {
+    if (!confirm("Tem certeza que deseja excluir TODOS os produtos?")) return;
+    try {
+        const response = await fetch(`${API}/produto/deletar`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao deletar");
+        await carregarProdutosCliente();
+        alert("Todos os produtos foram excluídos!");
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao deletar produtos");
+    }
 }
 
 /* ================= PEDIDOS ABERTOS ================= */
 async function carregarPedidosAbertos() {
-    const res = await fetch(`${API}/pedidos`);
-    renderPedidosAbertos(await res.json());
+    try {
+        const res = await fetch(`${API}/pedidos`);
+        if (!res.ok) throw new Error("Erro ao carregar pedidos");
+        const dados = await res.json();
+        renderPedidosAbertos(dados);
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao carregar pedidos abertos");
+    }
 }
 
 async function filtrarPedidosAbertos() {
-    const nome = filtroNomeAbertos.value.trim();
+    const nome = document.getElementById("filtroNomeAbertos").value.trim();
     if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderPedidosAbertos(await res.json());
+    try {
+        const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error("Erro ao filtrar");
+        const dados = await res.json();
+        renderPedidosAbertos(dados);
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao filtrar pedidos");
+    }
 }
 
 function renderPedidosAbertos(dados) {
-    tabelaAbertos.innerHTML = "";
+    const tabela = document.getElementById("tabelaAbertos");
+    tabela.innerHTML = "";
+
     if (dados.length === 0) {
-        tabelaAbertos.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido</td></tr>`;
+        tabela.innerHTML =
+            `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido aberto</td></tr>`;
         return;
     }
 
     dados.forEach(p => {
-        tabelaAbertos.innerHTML += `
+        tabela.innerHTML += `
         <tr>
             <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
@@ -199,67 +569,102 @@ function renderPedidosAbertos(dados) {
             <td>${formatarDataBR(p.data_pedido)}</td>
             <td class="text-center">
                 <button class="btn btn-success btn-sm me-1"
-                        onclick="finalizarPedido(${p.id})">✔</button>
+                        onclick="finalizarPedido(${p.id})">✔ Finalizar</button>
                 <button class="btn btn-danger btn-sm"
-                        onclick="excluirPedido(${p.id})">🗑</button>
+                        onclick="excluirPedido(${p.id})">🗑 Excluir</button>
             </td>
         </tr>`;
     });
 }
 
-const dataAtual = new Date();
-
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); // mês começa em 0
-    const ano = dataAtual.getFullYear();
-
-    const dataFormatada = `${dia}/${mes}/${ano}`;
-    console.log(dataFormatada); // Ex: 04/02/2026
 async function finalizarPedido(id) {
     if (!confirm("Finalizar pedido?")) return;
 
+    const dataAtual = new Date();
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+    const ano = dataAtual.getFullYear();
+    const dataFormatada = `${ano}-${mes}-${dia}`;
 
+    try {
+        const response = await fetch(`${API}/pedido/${id}/finalizar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                data_finalizacao: dataFormatada
+            })
+        });
 
-    await fetch(`${API}/pedido/${id}/finalizar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            data_finalizacao: dataFormatada
-        })
-    });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.erro || "Erro ao finalizar");
+        }
 
-    carregarPedidosAbertos();
-    carregarPedidosFinalizados();
+        await carregarPedidosAbertos();
+        await carregarPedidosFinalizados();
+
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao finalizar pedido: " + error.message);
+    }
 }
-
 
 async function excluirPedido(id) {
     if (!confirm("Excluir pedido?")) return;
-    await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
-    carregarPedidosAbertos();
+    try {
+        const response = await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao excluir");
+        await carregarPedidosAbertos();
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao excluir pedido");
+    }
 }
 
 /* ================= PEDIDOS FINALIZADOS ================= */
 async function carregarPedidosFinalizados() {
-    const res = await fetch(`${API}/pedidos_finalizados`);
-    renderPedidosFinalizados(await res.json());
+    try {
+        const res = await fetch(`${API}/pedidos_finalizados`);
+        if (!res.ok) throw new Error("Erro ao carregar finalizados");
+        const dados = await res.json();
+        renderPedidosFinalizados(dados);
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao carregar pedidos finalizados");
+    }
 }
 
 async function filtrarPedidosFinalizados() {
-    const nome = filtroNomeFinalizados.value.trim();
+    const nome = document.getElementById("filtroNomeFinalizados").value.trim();
     if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderPedidosFinalizados(await res.json());
+    try {
+        const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error("Erro ao filtrar");
+        const dados = await res.json();
+        renderPedidosFinalizados(dados);
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao filtrar pedidos");
+    }
 }
 
 function renderPedidosFinalizados(dados) {
-    tabelaFinalizados.innerHTML = "";
+    const tabela = document.getElementById("tabelaFinalizados");
+    tabela.innerHTML = "";
+
+    if (dados.length === 0) {
+        tabela.innerHTML =
+            `<tr><td colspan="4" class="text-center text-muted">Nenhum pedido finalizado</td></tr>`;
+        return;
+    }
+
     dados.forEach(p => {
-        tabelaFinalizados.innerHTML += `
+        tabela.innerHTML += `
         <tr>
+            <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
-            <td>${formatarDataBR(dataAtual)}</td>
+            <td>${formatarDataBR(p.data_finalizacao || p.data_pedido)}</td>
         </tr>`;
     });
 }
@@ -296,47 +701,42 @@ function imprimirPedidosFinalizados() {
 }
 
 async function deletarPedidosFinalizados() {
-    if (!confirm("Excluir todos?")) return;
-    await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
-    carregarPedidosFinalizados();
+    if (!confirm("Tem certeza que deseja excluir TODOS os pedidos finalizados?")) return;
+    try {
+        const response = await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao deletar");
+        await carregarPedidosFinalizados();
+        alert("Todos os pedidos finalizados foram excluídos!");
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao deletar pedidos");
+    }
 }
 
-/* ================= PRODUTOS CLIENTE ================= */
-async function carregarProdutosCliente() {
-    const res = await fetch(`${API}/produtos_cliente`);
-    renderProdutosCliente(await res.json());
+/* ===== FUNÇÕES DE VERIFICAÇÃO ===== */
+function verificarDuplicatasAbertos() {
+    fetch(`${API}/pedidos`)
+        .then(res => res.json())
+        .then(dados => {
+            const duplicatas = dados.filter((item, index, self) =>
+                index !== self.findIndex(p => p.nome_cliente === item.nome_cliente && p.valor_total === item.valor_total)
+            );
+            alert(`Encontradas ${duplicatas.length} duplicatas em Pedidos Abertos`);
+            console.log("Duplicatas:", duplicatas);
+        });
 }
 
-async function filtrarProdutosCliente() {
-    const nome = filtroNomeProdutosCliente.value.trim();
-    if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderProdutosCliente(await res.json());
+/* INIT - Carrega todos os dados */
+async function init() {
+    await Promise.all([
+        carregarPedidosAbertos(),
+        carregarPedidosFinalizados(),
+        carregarProdutosCliente()
+    ]);
 }
 
-function renderProdutosCliente(dados) {
-    tabelaProdutosCliente.innerHTML = "";
-    dados.forEach(p => {
-        tabelaProdutosCliente.innerHTML += `
-        <tr>
-            <td>${p.id}</td>
-            <td>${p.cliente}</td>
-            <td>${p.produto}</td>
-            <td>${p.qtd}</td>
-        </tr>`;
-    });
-}
-
-async function deletarProdutosCliente() {
-    if (!confirm("Excluir todos os produtos?")) return;
-    await fetch(`${API}/produto/deletar`, { method: "DELETE" });
-    carregarProdutosCliente();
-}
-
-/* INIT */
-carregarPedidosAbertos();
-carregarPedidosFinalizados();
-carregarProdutosCliente();
+// Inicia a aplicação
+init();
 </script>
 
 </body>
