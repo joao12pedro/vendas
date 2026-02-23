@@ -53,72 +53,63 @@ def obter_produto_por_id(id):
     return get_por_id("usuario",id)
 
 def criar_usuario():
-    data = request.get_json()  # recebe dados no corpo da requisição
-    nome = data.get('nome')
-    perfil = data.get('perfil')
-    username = data.get("username")
-    password = data.get("password")
-
-    if not nome or not perfil or not username or not password:
-        return jsonify({"erro": "Algum dado está faltando"}), 400
+    data = request.get_json()
+    print("DATA:", data)
 
     supabase = connect_db()
 
-    try:
-        resposta = supabase.table("usuario").insert({"nome": nome,
-                                                     "perfil": perfil,
-                                                     "username": username,
-                                                     "password": password}).execute()
-        return jsonify({
-            "mensagem": "usuario inserido com sucesso!",
-            "data": resposta.data
-        }), 201
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+    resposta = supabase.table("usuario").insert({
+        "nome": data["nome"],
+        "perfil": data["perfil"],
+        "username": data["username"],
+        "password": data["password"]
+    }).execute()
+
+    print("RESPOSTA SUPABASE:", resposta.data)  # 👈 DEBUG
+
+    return jsonify({
+        "mensagem": "usuario inserido com sucesso!",
+        "data": resposta.data
+    }), 201
+
 
 @usuario_bp.route("/usuario", methods=["POST"])
 def nova_usuario():
     return criar_usuario()
 
+# Endpoint de login
+@usuario_bp.route("/usuario/login", methods=["POST"])
 def login():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
+    username = data.get("username")
+    password = data.get("password")
 
     if not username or not password:
-        return jsonify({"erro": "Username e password são obrigatórios"}), 400
+        return jsonify({"erro": "Usuário e senha são obrigatórios"}), 400
+
+    username = username.strip().lower()
 
     supabase = connect_db()
 
     try:
-        resposta = (
-            supabase
-            .table("usuario")
-            .select("id, username, password")
+        resultado = (
+            supabase.table("usuario")
+            .select("*")
             .eq("username", username)
-            .eq("password", password)
-            .limit(1)
+            .eq("password", password)  # Lembre-se: comparar hash!
             .execute()
         )
 
-        if resposta.data:
-            usuario = resposta.data[0]
+        if resultado.data:
             return jsonify({
                 "mensagem": "Login realizado com sucesso",
-                "usuario": {
-                    "id": usuario["id"],
-                    "username": usuario["username"]
-                }
+                "usuario": resultado.data[0]
             }), 200
         else:
-            return jsonify({"erro": "Username ou senha inválidos"}), 401
+            return jsonify({"erro": "Usuário ou senha inválidos"}), 401
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
-
-@usuario_bp.route("/usuario/login", methods=["POST"])
-def logar():
-    return login()
 
 
 def atualizar_usuario_no_banco(id: int, dados_atualizacao: dict):
@@ -208,12 +199,53 @@ def delete(id):
 def excluir_usuario(id):
     return delete(id)
 
+
+@usuario_bp.route("/usuario/verificar_disponibilidade/<username>", methods=["GET"])
+def verificar_disponibilidade(username):
+    """
+    Endpoint para verificar se um username está disponível
+    Retorna: {"disponivel": true/false, "mensagem": "..."}
+    """
+    try:
+        print(f"🔵 Verificando disponibilidade: {username}")
+
+        supabase = connect_db()
+
+        # Normalizar username
+        username = username.strip().lower()
+
+        # Verificar se já existe
+        resultado = (
+            supabase.table("usuario")
+            .select("*")
+            .eq("username", username)
+            .execute()
+        )
+
+        existe = len(resultado.data) > 0
+
+        print(f"🔵 Username '{username}' existe? {existe}")
+
+        return jsonify({
+            "disponivel": not existe,
+            "mensagem": "Username disponível" if not existe else "Username já existe"
+        }), 200
+
+    except Exception as e:
+        print(f"🔴 Erro: {e}")
+        return jsonify({"erro": str(e)}), 500
+@usuario_bp.route("/usuario/verifica_usuario", methods=["POST"])
 def verifica_usuario():
+    """
+    Endpoint para criar usuário (com verificação de duplicidade)
+    """
     data = request.get_json()
-    username = data.get("username")  # aceita os dois nomes
+    username = data.get("username")
     nome = data.get("nome")
     perfil = data.get("perfil")
     password = data.get("password")
+
+    print(f"🔵 Recebido: username={username}, nome={nome}")
 
     if not username or not nome or not perfil or not password:
         return jsonify({"erro": "Todos os campos são obrigatórios"}), 400
@@ -232,7 +264,10 @@ def verifica_usuario():
             .execute()
         )
 
+        print(f"🔵 Usuário existente: {usuario_existente.data}")
+
         if usuario_existente.data:
+            print(f"🟠 Username '{username}' já existe!")
             return jsonify({"mensagem": f"O nome de usuário '{username}' já existe."}), 409
 
         # Criar novo usuário
@@ -242,10 +277,12 @@ def verifica_usuario():
                 "nome": nome,
                 "perfil": perfil,
                 "username": username,
-                "password": password
+                "password": password  # Lembre-se: fazer hash da senha!
             })
             .execute()
         )
+
+        print(f"🟢 Usuário criado: {novo_usuario.data}")
 
         return jsonify({
             "mensagem": f"Usuário '{username}' criado com sucesso!",
@@ -253,11 +290,8 @@ def verifica_usuario():
         }), 201
 
     except Exception as e:
+        print(f"🔴 Erro: {e}")
         return jsonify({"erro": str(e)}), 500
 
-
-@usuario_bp.route("/verifica_usuario", methods=["POST"])
-def usuario_existente():
-    return verifica_usuario()
 
 
