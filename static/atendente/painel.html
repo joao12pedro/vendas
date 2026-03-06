@@ -2,386 +2,341 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Home - Pedido</title>
+    <title>Painel Administrativo</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f9; }
+        .card { border-radius: 12px; }
+        .table th, .table td { vertical-align: middle; }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-4">
+<div class="container my-4">
+    <h2 class="fw-bold mb-4">📊 Painel Administrativo</h2>
 
-    <h2 class="mb-4">🛒 Novo Pedido</h2>
+    <!-- ABAS -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#abertos">
+                Pedidos Abertos
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizados">
+                Pedidos Finalizados
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#produtosCliente">
+                Produtos do Cliente
+            </button>
+        </li>
+    </ul>
 
-    <!-- Nome do cliente -->
-    <div class="mb-3">
-        <label class="form-label">Nome do Cliente</label>
-        <input
-            type="text"
-            id="nomeCliente"
-            class="form-control"
-            placeholder="Digite o nome">
+    <div class="tab-content">
+
+        <!-- ================= PEDIDOS ABERTOS ================= -->
+        <div class="tab-pane fade show active" id="abertos">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeAbertos" class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filtrarPedidosAbertos()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAbertos"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PEDIDOS FINALIZADOS ================= -->
+        <div class="tab-pane fade" id="finalizados">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeFinalizados" class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="filtrarPedidosFinalizados()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" onclick="carregarPedidosFinalizados()">🔄 Limpar</button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-primary btn-sm me-2"
+                                    onclick="imprimirPedidosFinalizados()">🖨 Imprimir</button>
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deletarPedidosFinalizados()">🗑 Deletar Todos</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaFinalizados"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PRODUTOS DO CLIENTE ================= -->
+        <div class="tab-pane fade" id="produtosCliente">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <div class="row mb-3 align-items-end">
+                        <div class="col-md-4">
+                            <input type="text" id="filtroNomeProdutosCliente"
+                                   class="form-control"
+                                   placeholder="Nome do cliente">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100"
+                                    onclick="filtrarProdutosCliente()">🔍 Buscar</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100"
+                                    onclick="carregarProdutosCliente()">🔄 Limpar</button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead class="table-info">
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Produto</th>
+                                <th>Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaProdutosCliente"></tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <!-- Produtos do dia -->
-    <h4 class="mt-4">Produtos do Dia</h4>
-
-    <table class="table table-bordered mt-2">
-        <thead class="table-light">
-            <tr>
-                <th>Produto</th>
-                <th>Preço</th>
-                <th>Estoque</th>
-                <th class="text-center">Quantidade</th>
-            </tr>
-        </thead>
-        <tbody id="listaProdutos"></tbody>
-    </table>
-
-    <!-- Itens do pedido -->
-    <h4 class="mt-4">Itens do Pedido</h4>
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-            </tr>
-        </thead>
-        <tbody id="itensPedido"></tbody>
-    </table>
-
-    <button class="btn btn-primary mt-3" onclick="criarPedido()">
-        Criar Pedido
-    </button>
-
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-const BASE_URL = "http://127.0.0.1:5000";
+const API = "http://127.0.0.1:5000";
 
-let produtosDia = [];
-let produtosSelecionados = [];
-
-// Função para verificar se o produto é Coxa/Sobrecoxa
-function isCoxaSobrecoxa(nome) {
-    return nome && nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
+/* ===== FUNÇÃO GLOBAL PARA DATA BR ===== */
+function formatarDataBR(data) {
+    if (!data) return "";
+    const d = new Date(data);
+    return d.toLocaleDateString("pt-BR");
 }
 
-// Função para obter o incremento baseado no produto
-function getIncremento(nome) {
-    // Coxa/Sobrecoxa: 0.0833333333333333 (1/12), outros: 1
-    return isCoxaSobrecoxa(nome) ? 0.0833333333333333 : 1;
+/* ================= PEDIDOS ABERTOS ================= */
+async function carregarPedidosAbertos() {
+    const res = await fetch(`${API}/pedidos`);
+    renderPedidosAbertos(await res.json());
 }
 
-// Função para arredondar para múltiplos de 1/12 quando for Coxa/Sobrecoxa
-function arredondarParaFracao(valor, nome) {
-    if (isCoxaSobrecoxa(nome)) {
-        // Arredonda para o múltiplo mais próximo de 0.0833333333333333
-        const incremento = 0.0833333333333333;
-        const multiplos = Math.round(valor / incremento);
-        return multiplos * incremento;
-    }
-    return valor;
+async function filtrarPedidosAbertos() {
+    const nome = filtroNomeAbertos.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderPedidosAbertos(await res.json());
 }
 
-// Função para formatar a quantidade de Coxa/Sobrecoxa como fração de doze avos
-function formatarQuantidadeCoxaSobrecoxa(valor) {
-    const dozeAvos = Math.round(valor / 0.0833333333333333);
-    const inteiros = Math.floor(dozeAvos / 12);
-    const resto = dozeAvos % 12;
-
-    // Simplificar frações quando possível
-    let fracao = "";
-    if (resto === 0) {
-        fracao = "";
-    } else if (resto === 1) {
-        fracao = "1/12";
-    } else if (resto === 2) {
-        fracao = "1/6";
-    } else if (resto === 3) {
-        fracao = "1/4";
-    } else if (resto === 4) {
-        fracao = "1/3";
-    } else if (resto === 5) {
-        fracao = "5/12";
-    } else if (resto === 6) {
-        fracao = "1/2";
-    } else if (resto === 7) {
-        fracao = "7/12";
-    } else if (resto === 8) {
-        fracao = "2/3";
-    } else if (resto === 9) {
-        fracao = "3/4";
-    } else if (resto === 10) {
-        fracao = "5/6";
-    } else if (resto === 11) {
-        fracao = "11/12";
-    }
-
-    if (inteiros === 0) {
-        return fracao || "0";
-    } else if (resto === 0) {
-        return inteiros.toString();
-    } else {
-        return `${inteiros} ${fracao}`;
-    }
-}
-
-/* ===============================
-   PRODUTOS DO DIA
-================================ */
-async function carregarProdutosDia() {
-    const resp = await fetch(`${BASE_URL}/produto_dia`);
-    produtosDia = await resp.json();
-
-    const tbody = document.getElementById("listaProdutos");
-    tbody.innerHTML = "";
-
-    produtosDia.forEach(p => {
-        const item = produtosSelecionados.find(i => i.produto_id === p.id);
-        let qtdSelecionada = item ? item.quantidade : 0;
-        const incremento = getIncremento(p.nome);
-
-        // Garantir que a quantidade esteja arredondada corretamente
-        if (item && isCoxaSobrecoxa(p.nome)) {
-            qtdSelecionada = arredondarParaFracao(qtdSelecionada, p.nome);
-            item.quantidade = qtdSelecionada;
-        }
-
-        // Verifica se pode incrementar (considerando estoque e incremento específico)
-        const podeIncrementar = (qtdSelecionada + incremento) <= p.qtd;
-        const disabledMais = !podeIncrementar ? "disabled" : "";
-
-        // Formata a exibição da quantidade
-        let qtdDisplay;
-        if (isCoxaSobrecoxa(p.nome)) {
-            // Para Coxa/Sobrecoxa, mostra número decimal + fração
-            const valorDecimal = qtdSelecionada.toFixed(2);
-            const valorFracao = formatarQuantidadeCoxaSobrecoxa(qtdSelecionada);
-            qtdDisplay = `${valorDecimal} (${valorFracao})`;
-        } else {
-            qtdDisplay = qtdSelecionada.toFixed(2);
-        }
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${p.nome}</td>
-                <td>R$ ${p.preco.toFixed(2)}</td>
-                <td>${p.qtd}</td>
-                <td class="text-center">
-                    <button class="btn btn-outline-danger btn-sm"
-                        onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
-                        −
-                    </button>
-
-                    <span class="mx-2 fw-bold">${qtdDisplay}</span>
-
-                    <button class="btn btn-outline-success btn-sm"
-                        ${disabledMais}
-                        onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">
-                        +
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-/* ===============================
-   ALTERAR QUANTIDADE
-================================ */
-function alterarQuantidade(id, nome, delta) {
-    const produto = produtosDia.find(p => p.id === id);
-    let item = produtosSelecionados.find(p => p.produto_id === id);
-
-    if (!item && delta > 0) {
-        // Para Coxa/Sobrecoxa, a quantidade inicial é o incremento (1/12)
-        let quantidadeInicial = Math.abs(delta);
-        if (isCoxaSobrecoxa(nome)) {
-            quantidadeInicial = arredondarParaFracao(quantidadeInicial, nome);
-        }
-        produtosSelecionados.push({
-            produto_id: id,
-            nome,
-            quantidade: quantidadeInicial
-        });
-    } else if (item) {
-        // Calcula nova quantidade
-        let novaQuantidade = item.quantidade + delta;
-
-        // Para Coxa/Sobrecoxa, arredonda para o múltiplo mais próximo de 1/12
-        if (isCoxaSobrecoxa(nome)) {
-            novaQuantidade = arredondarParaFracao(novaQuantidade, nome);
-        } else {
-            // Para outros produtos, arredonda para 2 casas decimais
-            novaQuantidade = Math.round(novaQuantidade * 100) / 100;
-        }
-
-        // Verifica limites
-        if (novaQuantidade > produto.qtd) {
-            novaQuantidade = produto.qtd;
-            // Arredonda novamente se for Coxa/Sobrecoxa
-            if (isCoxaSobrecoxa(nome)) {
-                novaQuantidade = arredondarParaFracao(novaQuantidade, nome);
-            }
-        }
-
-        if (novaQuantidade <= 0) {
-            produtosSelecionados = produtosSelecionados.filter(
-                p => p.produto_id !== id
-            );
-        } else {
-            item.quantidade = novaQuantidade;
-        }
-    }
-
-    renderizarItens();
-    carregarProdutosDia();
-}
-
-/* ===============================
-   RENDERIZAR ITENS
-================================ */
-function renderizarItens() {
-    const tbody = document.getElementById("itensPedido");
-    tbody.innerHTML = "";
-
-    produtosSelecionados.forEach(p => {
-        // Formata a exibição da quantidade
-        let qtdDisplay;
-        if (isCoxaSobrecoxa(p.nome)) {
-            // Para Coxa/Sobrecoxa, mostra número decimal + fração
-            const valorDecimal = p.quantidade.toFixed(2);
-            const valorFracao = formatarQuantidadeCoxaSobrecoxa(p.quantidade);
-            qtdDisplay = `${valorDecimal} (${valorFracao})`;
-        } else {
-            qtdDisplay = p.quantidade.toFixed(2);
-        }
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${p.nome}</td>
-                <td>${qtdDisplay}</td>
-            </tr>
-        `;
-    });
-}
-
-/* ===============================
-   CRIAR PEDIDO (CORRIGIDO)
-================================ */
-async function criarPedido() {
-    const cliente = document
-        .getElementById("nomeCliente")
-        .value
-        .trim()
-        .toUpperCase();
-
-    if (!cliente) {
-        alert("Nome obrigatório");
+function renderPedidosAbertos(dados) {
+    tabelaAbertos.innerHTML = "";
+    if (dados.length === 0) {
+        tabelaAbertos.innerHTML =
+            `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido</td></tr>`;
         return;
     }
 
-    if (produtosSelecionados.length === 0) {
-        alert("Selecione produtos");
-        return;
-    }
+    dados.forEach(p => {
+        tabelaAbertos.innerHTML += `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.nome_cliente}</td>
+            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
+            <td>${formatarDataBR(p.data_pedido)}</td>
+            <td class="text-center">
+                <button class="btn btn-success btn-sm me-1"
+                        onclick="finalizarPedido(${p.id})">✔</button>
+                <button class="btn btn-danger btn-sm"
+                        onclick="excluirPedido(${p.id})">🗑</button>
+            </td>
+        </tr>`;
+    });
+}
 
-    // Validação e ajuste das quantidades
-    for (const item of produtosSelecionados) {
-        if (isCoxaSobrecoxa(item.nome)) {
-            // Garantir que a quantidade seja um múltiplo de 1/12
-            item.quantidade = arredondarParaFracao(item.quantidade, item.nome);
-        } else {
-            // Garantir que a quantidade seja um número com no máximo 2 casas decimais
-            item.quantidade = Math.round(item.quantidade * 100) / 100;
-        }
+const dataAtual = new Date();
 
-        if (item.quantidade <= 0) {
-            alert(`Quantidade inválida para o produto ${item.nome}`);
-            return;
-        }
-    }
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+    const ano = dataAtual.getFullYear();
 
-    try {
-        /* ===== PRIMEIRO: Cria o pedido ===== */
-        const payload = {
-            nome_cliente: cliente,
-            produtos: produtosSelecionados.map(p => ({
-                produto_id: p.produto_id,
-                quantidade: p.quantidade
-            }))
-        };
+    const dataFormatada = `${dia}/${mes}/${ano}`;
+    console.log(dataFormatada); // Ex: 04/02/2026
+async function finalizarPedido(id) {
+    if (!confirm("Finalizar pedido?")) return;
 
-        const resp = await fetch(`${BASE_URL}/pedido`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
 
-        const data = await resp.json();
 
-        if (!resp.ok) {
-            alert(data.erro || "Erro ao criar pedido");
-            return;
-        }
+    await fetch(`${API}/pedido/${id}/finalizar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            data_finalizacao: dataFormatada
+        })
+    });
 
-        /* ===== DEPOIS: Insere na tabela produtos_cliente (apenas UMA VEZ por produto) ===== */
-        // Agrupa produtos iguais para não duplicar na tabela produtos_cliente
-        const produtosAgrupados = {};
+    carregarPedidosAbertos();
+    carregarPedidosFinalizados();
+}
 
-        produtosSelecionados.forEach(item => {
-            const chave = item.nome;
-            if (produtosAgrupados[chave]) {
-                // Se já existe, soma a quantidade
-                produtosAgrupados[chave].qtd += item.quantidade;
-            } else {
-                // Se não existe, cria novo
-                produtosAgrupados[chave] = {
-                    cliente: cliente,
-                    produto: item.nome,
-                    qtd: item.quantidade
-                };
-            }
-        });
 
-        // Insere cada produto agrupado na tabela produtos_cliente
-        for (const produtoNome in produtosAgrupados) {
-            const item = produtosAgrupados[produtoNome];
+async function excluirPedido(id) {
+    if (!confirm("Excluir pedido?")) return;
+    await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
+    carregarPedidosAbertos();
+}
 
-            const response = await fetch(`${BASE_URL}/produtos_cliente`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    cliente: item.cliente,
-                    produto: item.produto,
-                    qtd: item.qtd
-                })
-            });
+/* ================= PEDIDOS FINALIZADOS ================= */
+async function carregarPedidosFinalizados() {
+    const res = await fetch(`${API}/pedidos_finalizados`);
+    renderPedidosFinalizados(await res.json());
+}
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error(`Erro ao adicionar produto ${item.produto}:`, errorData);
-                // Não interrompe o fluxo principal, apenas loga o erro
-            }
-        }
+async function filtrarPedidosFinalizados() {
+    const nome = filtroNomeFinalizados.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderPedidosFinalizados(await res.json());
+}
 
-        alert("✅ Pedido criado com sucesso!");
+function renderPedidosFinalizados(dados) {
+    tabelaFinalizados.innerHTML = "";
+    dados.forEach(p => {
+        tabelaFinalizados.innerHTML += `
+        <tr>
+            <td>${p.nome_cliente}</td>
+            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
+            <td>${formatarDataBR(dataAtual)}</td>
+        </tr>`;
+    });
+}
 
-        /* Reset */
-        produtosSelecionados = [];
-        document.getElementById("nomeCliente").value = "";
-        renderizarItens();
-        carregarProdutosDia();
+function imprimirPedidosFinalizados() {
+    const tabela = document.querySelector("#finalizados table").outerHTML;
 
-    } catch (error) {
-        alert("Erro de conexão com o servidor");
-        console.error(error);
-    }
+    const janela = window.open("", "", "width=900,height=700");
+
+    janela.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-br">
+        <head>
+            <meta charset="UTF-8">
+            <title>Pedidos Finalizados</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h2 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #e9ecef; }
+            </style>
+        </head>
+        <body>
+            <h2>Pedidos Finalizados</h2>
+            ${tabela}
+        </body>
+        </html>
+    `);
+
+    janela.document.close();
+    janela.print();
+    janela.close();
+}
+
+async function deletarPedidosFinalizados() {
+    if (!confirm("Excluir todos?")) return;
+    await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
+    carregarPedidosFinalizados();
+}
+
+/* ================= PRODUTOS CLIENTE ================= */
+async function carregarProdutosCliente() {
+    const res = await fetch(`${API}/produtos_cliente`);
+    renderProdutosCliente(await res.json());
+}
+
+async function filtrarProdutosCliente() {
+    const nome = filtroNomeProdutosCliente.value.trim();
+    if (!nome) return alert("Digite o nome");
+    const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
+    renderProdutosCliente(await res.json());
+}
+
+function renderProdutosCliente(dados) {
+    tabelaProdutosCliente.innerHTML = "";
+    dados.forEach(p => {
+        tabelaProdutosCliente.innerHTML += `
+        <tr>
+            <td>${p.id}</td>
+            <td>${p.cliente}</td>
+            <td>${p.produto}</td>
+            <td>${p.qtd}</td>
+        </tr>`;
+    });
+}
+
+async function deletarProdutosCliente() {
+    if (!confirm("Excluir todos os produtos?")) return;
+    await fetch(`${API}/produto/deletar`, { method: "DELETE" });
+    carregarProdutosCliente();
 }
 
 /* INIT */
-carregarProdutosDia();
+carregarPedidosAbertos();
+carregarPedidosFinalizados();
+carregarProdutosCliente();
 </script>
 
 </body>
