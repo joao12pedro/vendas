@@ -57,7 +57,7 @@
 </div>
 
 <script>
-const BASE_URL = "http://127.0.0.1:5000";
+const BASE_URL = "https://vendas-svoq.onrender.com";
 
 let produtosDia = [];
 let produtosSelecionados = [];
@@ -80,8 +80,8 @@ function isCategoria3(nome) {
 }
 
 function isCategoria4(nome) {
-    // Lasanha, Feijão Tropeiro, Salpicão, Maionese (pula de 0,5 em 0,5)
-    const produtos = ['lasanha', 'feijão tropeiro', 'feijao tropeiro', 'salpicão', 'salpicao', 'maionese'];
+    // Lasanha, Maionese, Salpicão, Feijão Tropeiro (decimais livres com input)
+    const produtos = ['lasanha', 'maionese', 'salpicão', 'salpicao', 'feijão tropeiro', 'feijao tropeiro'];
     return produtos.some(p => nome.toLowerCase().includes(p));
 }
 
@@ -91,10 +91,8 @@ function getIncremento(nome) {
         return 2; // Coxa/Sobrecoxa: pula de 2 em 2
     } else if (isCategoria3(nome)) {
         return 1; // Frango Recheado: pula de 1 em 1
-    } else if (isCategoria4(nome)) {
-        return 0.5; // Lasanha, etc: pula de 0.5 em 0.5
     } else {
-        return 0.1; // Categoria 1: incremento pequeno para os botões, mas input livre
+        return 0.1; // Demais categorias: incremento pequeno para os botões, mas input livre
     }
 }
 
@@ -114,11 +112,8 @@ function arredondarQuantidade(valor, nome) {
     } else if (isCategoria3(nome)) {
         // Frango Recheado: inteiros
         return Math.round(valor);
-    } else if (isCategoria4(nome)) {
-        // Lasanha, etc: múltiplos de 0.5
-        return Math.round(valor * 2) / 2;
     } else {
-        // Categoria 1: QUALQUER NÚMERO DECIMAL (sem arredondamento)
+        // Demais categorias: QUALQUER NÚMERO DECIMAL (sem arredondamento)
         // Apenas garante que seja um número válido com no máximo 3 casas decimais
         return Math.round(valor * 1000) / 1000;
     }
@@ -130,10 +125,8 @@ function formatarQuantidade(valor, nome) {
         return valor.toFixed(2); // Coxa/Sobrecoxa mostra 2 casas
     } else if (isCategoria3(nome)) {
         return valor.toFixed(0); // Frango Recheado mostra inteiro
-    } else if (isCategoria4(nome)) {
-        return valor.toFixed(1); // Lasanha, etc mostra 1 casa
     } else {
-        return valor.toFixed(3); // Categoria 1 mostra 3 casas para permitir decimais livres
+        return valor.toFixed(3); // Demais categorias mostra 3 casas para permitir decimais livres
     }
 }
 
@@ -152,19 +145,16 @@ function atualizarQuantidadeInput(id, nome) {
     const produto = produtosDia.find(p => p.id === id);
     if (!produto) return;
 
-    // Para categoria 1, aceita qualquer valor decimal
-    if (isCategoria1(nome)) {
-        // Apenas limita ao estoque (considerando quantidade real para Coxa/Sobrecoxa)
-        const quantidadeReal = getQuantidadeReal(nome, valor);
-        if (quantidadeReal > produto.qtd) {
-            // Se ultrapassar o estoque, ajusta para o máximo
-            if (isCategoria2(nome)) {
-                valor = Math.floor(produto.qtd * 2);
-            } else {
-                valor = produto.qtd;
-            }
-            input.value = formatarQuantidade(valor, nome);
+    // Limita ao estoque (considerando quantidade real para Coxa/Sobrecoxa)
+    const quantidadeReal = getQuantidadeReal(nome, valor);
+    if (quantidadeReal > produto.qtd) {
+        // Se ultrapassar o estoque, ajusta para o máximo
+        if (isCategoria2(nome)) {
+            valor = Math.floor(produto.qtd * 2);
+        } else {
+            valor = produto.qtd;
         }
+        input.value = formatarQuantidade(valor, nome);
     }
 
     let item = produtosSelecionados.find(p => p.produto_id === id);
@@ -204,7 +194,9 @@ async function carregarProdutosDia() {
         const item = produtosSelecionados.find(i => i.produto_id === p.id);
         let qtdSelecionada = item ? item.quantidade : 0;
         const incremento = getIncremento(p.nome);
-        const isCategoria1Produto = isCategoria1(p.nome);
+
+        // Verificar se o produto deve ter input livre (categorias 1 e 4)
+        const temInputLivre = isCategoria1(p.nome) || isCategoria4(p.nome);
 
         // Garantir que a quantidade esteja arredondada corretamente
         if (item) {
@@ -218,11 +210,15 @@ async function carregarProdutosDia() {
         const podeIncrementar = proximaQuantidadeReal <= p.qtd;
         const disabledMais = !podeIncrementar ? "disabled" : "";
 
+        // Verifica se pode decrementar
+        const podeDecrementar = qtdSelecionada > 0;
+        const disabledMenos = !podeDecrementar ? "disabled" : "";
+
         // Formata a exibição da quantidade
         const qtdDisplay = formatarQuantidade(qtdSelecionada, p.nome);
 
-        if (isCategoria1Produto) {
-            // Para categoria 1, mostra input de texto para digitar qualquer decimal
+        if (temInputLivre) {
+            // Para produtos com input livre, mostra input de texto para digitar qualquer decimal
             tbody.innerHTML += `
                 <tr>
                     <td>${p.nome}</td>
@@ -231,6 +227,7 @@ async function carregarProdutosDia() {
                     <td class="text-center">
                         <div class="d-flex align-items-center justify-content-center">
                             <button class="btn btn-outline-danger btn-sm me-1"
+                                ${disabledMenos}
                                 onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
                                 −
                             </button>
@@ -263,6 +260,7 @@ async function carregarProdutosDia() {
                     <td>${p.qtd}</td>
                     <td class="text-center">
                         <button class="btn btn-outline-danger btn-sm"
+                            ${disabledMenos}
                             onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
                             −
                         </button>
