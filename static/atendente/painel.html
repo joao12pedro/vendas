@@ -11,12 +11,53 @@
         body { background-color: #f4f6f9; }
         .card { border-radius: 12px; }
         .table th, .table td { vertical-align: middle; }
+        .coxa-sobrecoxa {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+        .badge-pares {
+            background-color: #17a2b8;
+            color: white;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 5px;
+        }
+        .valor-normal {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .valor-promocao {
+            color: #dc3545;
+            font-weight: bold;
+            background-color: #f8d7da;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+        .produto-especial {
+            background-color: #d1ecf1;
+        }
     </style>
 </head>
 <body>
 
 <div class="container my-4">
     <h2 class="fw-bold mb-4">📊 Painel Administrativo</h2>
+
+    <!-- Botões de log -->
+    <div class="mb-2">
+        <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLogs()">
+            🖥️ Mostrar Logs de Depuração
+        </button>
+        <button class="btn btn-sm btn-warning" type="button" onclick="limparLogs()">
+            🧹 Limpar Logs
+        </button>
+    </div>
+
+    <!-- Console de logs (inicialmente oculto) -->
+    <div id="consoleLogs" style="display: none; background-color: #1e1e1e; color: #00ff00; font-family: monospace; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; margin-bottom: 15px; font-size: 12px;">
+        <div id="logMessages"></div>
+    </div>
 
     <!-- ABAS -->
     <ul class="nav nav-tabs mb-3">
@@ -54,6 +95,10 @@
                         </div>
                         <div class="col-md-2">
                             <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-danger btn-sm me-2" onclick="deletarTodosPedidosAbertos()">🗑 Excluir Todos</button>
+                            <button class="btn btn-info btn-sm" onclick="exportarPedidosAbertos()">📊 Exportar</button>
                         </div>
                     </div>
 
@@ -101,6 +146,7 @@
                     <table class="table table-bordered table-hover table-sm">
                         <thead class="table-success">
                             <tr>
+                                <th>ID</th>
                                 <th>Cliente</th>
                                 <th>Valor</th>
                                 <th>Data</th>
@@ -133,9 +179,16 @@
                                     onclick="carregarProdutosCliente()">🔄 Limpar</button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm"
+                            <button class="btn btn-danger btn-sm me-2"
                                     onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
+                            <button class="btn btn-info btn-sm"
+                                    onclick="exportarProdutosCliente()">📊 Exportar</button>
                         </div>
+                    </div>
+
+                    <div class="alert alert-info small mb-2">
+                        <strong>ℹ️ Informações:</strong> Todos os valores são calculados com base nos preços reais dos produtos cadastrados.
+                        Coxa/Sobrecoxa segue tabela promocional especial.
                     </div>
 
                     <table class="table table-bordered table-hover table-sm">
@@ -144,7 +197,10 @@
                                 <th>ID</th>
                                 <th>Cliente</th>
                                 <th>Produto</th>
-                                <th>Qtd</th>
+                                <th>Quantidade</th>
+                                <th>Pares</th>
+                                <th>Preço Unit.</th>
+                                <th>Valor Total</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaProdutosCliente"></tbody>
@@ -160,115 +216,334 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const API = "https://vendas-svoq.onrender.com";
+const API = "http://127.0.0.1:5000";
+let logsVisiveis = false;
+let precosProdutos = {}; // Cache dos preços dos produtos
+
+// ===== FUNÇÕES DE LOG =====
+function addLog(mensagem, tipo = 'info') {
+    const logDiv = document.getElementById('logMessages');
+    const timestamp = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+    let cor = '#00ff00';
+    if (tipo === 'error') cor = '#ff5555';
+    if (tipo === 'warning') cor = '#ffaa00';
+    if (tipo === 'debug') cor = '#8888ff';
+
+    logDiv.innerHTML += `<div style="color: ${cor}">[${timestamp}] ${mensagem}</div>`;
+
+    // Rolar para o final
+    const consoleDiv = document.getElementById('consoleLogs');
+    consoleDiv.scrollTop = consoleDiv.scrollHeight;
+
+    // Também mostra no console do navegador
+    console.log(`[${timestamp}] ${mensagem}`);
+}
+
+function toggleLogs() {
+    logsVisiveis = !logsVisiveis;
+    document.getElementById('consoleLogs').style.display = logsVisiveis ? 'block' : 'none';
+    if (logsVisiveis) {
+        addLog('🔍 Logs de depuração ativados', 'info');
+    }
+}
+
+function limparLogs() {
+    document.getElementById('logMessages').innerHTML = '';
+    addLog('🧹 Logs limpos', 'info');
+}
+
+// ===== FUNÇÕES AUXILIARES =====
+function isCoxaSobrecoxa(produto) {
+    if (!produto) return false;
+    const nome = typeof produto === 'string' ? produto : produto.produto || produto.nome || '';
+    const resultado = nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
+    return resultado;
+}
+
+function calcularPrecoCoxaSobrecoxa(pares, precoUnitario = 10) {
+    addLog(`💰 calcularPrecoCoxaSobrecoxa(${pares} pares, preço unitário R$ ${precoUnitario})`, 'debug');
+
+    if (pares <= 0) {
+        return { preco: 0, promocao: false };
+    }
+
+    let preco;
+    let promocao = false;
+
+    // Tabela de preços especiais por quantidade de PARES
+    if (pares === 1) {
+        preco = 10.00;
+        promocao = true;
+        addLog(`   → 1 par: R$ 10,00 (promoção)`, 'info');
+    } else if (pares === 2) {
+        preco = 20.00;
+        promocao = true;
+        addLog(`   → 2 pares: R$ 20,00 (promoção)`, 'info');
+    } else if (pares === 3) {
+        preco = 25.00;
+        promocao = true;
+        addLog(`   → 3 pares: R$ 25,00 (promoção)`, 'info');
+    } else if (pares === 4) {
+        preco = 35.00;
+        promocao = true;
+        addLog(`   → 4 pares: R$ 35,00 (promoção)`, 'info');
+    } else if (pares === 5) {
+        preco = 40.00;
+        promocao = true;
+        addLog(`   → 5 pares: R$ 40,00 (promoção)`, 'info');
+    } else if (pares === 6) {
+        preco = 50.00;
+        promocao = true;
+        addLog(`   → 6 pares: R$ 50,00 (promoção)`, 'info');
+    } else {
+        // Acima de 6 pares, preço normal
+        preco = precoUnitario * pares;
+        promocao = false;
+        addLog(`   → Acima de 6 pares (${pares}): R$ ${precoUnitario} × ${pares} = R$ ${preco.toFixed(2)} (preço normal)`, 'info');
+    }
+
+    return { preco, promocao };
+}
+
+// ===== FUNÇÃO PARA CARREGAR PREÇOS DOS PRODUTOS =====
+async function carregarPrecosProdutos() {
+    addLog('📋 Carregando preços dos produtos...', 'info');
+    try {
+        const res = await fetch(`${API}/produto_dia`);
+        if (!res.ok) throw new Error('Erro ao carregar produtos');
+        const produtos = await res.json();
+
+        // Cria mapa de preços por nome (case insensitive)
+        produtos.forEach(p => {
+            precosProdutos[p.nome.toLowerCase()] = p.preco;
+            addLog(`   ${p.nome}: R$ ${p.preco.toFixed(2)}`, 'debug');
+        });
+
+        addLog(`✅ Preços de ${produtos.length} produtos carregados`, 'info');
+        return true;
+    } catch (error) {
+        addLog(`❌ Erro ao carregar preços: ${error.message}`, 'error');
+        return false;
+    }
+}
 
 /* ===== FUNÇÃO GLOBAL PARA DATA BR ===== */
 function formatarDataBR(data) {
     if (!data) return "";
-    const d = new Date(data);
-    return d.toLocaleDateString("pt-BR");
+    try {
+        const d = new Date(data);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString("pt-BR");
+        }
+    } catch (e) {
+        console.error("Erro ao formatar data:", e);
+    }
+
+    // Se for string no formato YYYY-MM-DD
+    if (typeof data === 'string' && data.includes('-')) {
+        const partes = data.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+    }
+
+    return data;
 }
 
 /* ================= PEDIDOS ABERTOS ================= */
 async function carregarPedidosAbertos() {
-    const res = await fetch(`${API}/pedidos`);
-    renderPedidosAbertos(await res.json());
+    addLog('📋 Carregando pedidos abertos...', 'info');
+    try {
+        const res = await fetch(`${API}/pedidos`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+        addLog(`✅ ${dados.length} pedidos abertos carregados`, 'info');
+        renderPedidosAbertos(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao carregar pedidos abertos: ${error.message}`, 'error');
+        alert('Erro ao carregar pedidos abertos');
+    }
 }
 
 async function filtrarPedidosAbertos() {
-    const nome = filtroNomeAbertos.value.trim();
+    const nome = document.getElementById('filtroNomeAbertos').value.trim();
     if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderPedidosAbertos(await res.json());
+    addLog(`🔍 Filtrando pedidos abertos por nome: "${nome}"`, 'info');
+    try {
+        const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+        addLog(`✅ ${dados.length} pedidos encontrados`, 'info');
+        renderPedidosAbertos(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
+    }
 }
 
 function renderPedidosAbertos(dados) {
-    tabelaAbertos.innerHTML = "";
+    const tabela = document.getElementById('tabelaAbertos');
+    tabela.innerHTML = "";
+
     if (dados.length === 0) {
-        tabelaAbertos.innerHTML =
-            `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido</td></tr>`;
+        tabela.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido aberto</td></tr>`;
         return;
     }
 
     dados.forEach(p => {
-        tabelaAbertos.innerHTML += `
+        const valorFormatado = Number(p.valor_total).toFixed(2);
+
+        tabela.innerHTML += `
         <tr>
             <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
-            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
+            <td>R$ ${valorFormatado}</td>
             <td>${formatarDataBR(p.data_pedido)}</td>
             <td class="text-center">
                 <button class="btn btn-success btn-sm me-1"
-                        onclick="finalizarPedido(${p.id})">✔</button>
+                        onclick="finalizarPedido(${p.id})">✔ Finalizar</button>
                 <button class="btn btn-danger btn-sm"
-                        onclick="excluirPedido(${p.id})">🗑</button>
+                        onclick="excluirPedido(${p.id})">🗑 Excluir</button>
             </td>
         </tr>`;
     });
 }
 
-const dataAtual = new Date();
+async function deletarTodosPedidosAbertos() {
+    if (!confirm("Tem certeza que deseja excluir TODOS os pedidos abertos?")) return;
+    addLog('🗑️ Deletando todos os pedidos abertos...', 'warning');
 
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); // mês começa em 0
-    const ano = dataAtual.getFullYear();
+    try {
+        const res = await fetch(`${API}/pedidos`);
+        const pedidos = await res.json();
 
-    const dataFormatada = `${dia}/${mes}/${ano}`;
-    console.log(dataFormatada); // Ex: 04/02/2026
+        let deletados = 0;
+        for (const pedido of pedidos) {
+            await fetch(`${API}/pedido/${pedido.id}`, { method: "DELETE" });
+            deletados++;
+        }
+
+        addLog(`✅ ${deletados} pedidos abertos excluídos`, 'info');
+        carregarPedidosAbertos();
+    } catch (error) {
+        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+    }
+}
+
 async function finalizarPedido(id) {
     if (!confirm("Finalizar pedido?")) return;
 
+    const dataAtual = new Date();
+    const dia = String(dataAtual.getDate()).padStart(2, '0');
+    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+    const ano = dataAtual.getFullYear();
+    const dataFormatada = `${ano}-${mes}-${dia}`;
 
+    addLog(`📦 Finalizando pedido #${id} em ${dataFormatada}`, 'info');
 
-    await fetch(`${API}/pedido/${id}/finalizar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            data_finalizacao: dataFormatada
-        })
-    });
+    try {
+        const response = await fetch(`${API}/pedido/${id}/finalizar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                data_finalizacao: dataFormatada
+            })
+        });
 
-    carregarPedidosAbertos();
-    carregarPedidosFinalizados();
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.erro || "Erro ao finalizar");
+        }
+
+        addLog(`✅ Pedido #${id} finalizado com sucesso`, 'info');
+
+        carregarPedidosAbertos();
+        carregarPedidosFinalizados();
+    } catch (error) {
+        addLog(`❌ Erro ao finalizar pedido: ${error.message}`, 'error');
+        alert("Erro ao finalizar pedido: " + error.message);
+    }
 }
-
 
 async function excluirPedido(id) {
     if (!confirm("Excluir pedido?")) return;
-    await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
-    carregarPedidosAbertos();
+    addLog(`🗑️ Excluindo pedido #${id}`, 'warning');
+    try {
+        const response = await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao excluir");
+        addLog(`✅ Pedido #${id} excluído com sucesso`, 'info');
+        carregarPedidosAbertos();
+    } catch (error) {
+        addLog(`❌ Erro ao excluir pedido: ${error.message}`, 'error');
+    }
+}
+
+function exportarPedidosAbertos() {
+    addLog('📊 Exportando pedidos abertos...', 'info');
+    const tabela = document.querySelector('#abertos table').outerHTML;
+    const janela = window.open('', '', 'width=800,height=600');
+    janela.document.write(`
+        <html>
+        <head><title>Pedidos Abertos</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body><div class="container mt-3">${tabela}</div></body>
+        </html>
+    `);
 }
 
 /* ================= PEDIDOS FINALIZADOS ================= */
 async function carregarPedidosFinalizados() {
-    const res = await fetch(`${API}/pedidos_finalizados`);
-    renderPedidosFinalizados(await res.json());
+    addLog('📋 Carregando pedidos finalizados...', 'info');
+    try {
+        const res = await fetch(`${API}/pedidos_finalizados`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+        addLog(`✅ ${dados.length} pedidos finalizados carregados`, 'info');
+        renderPedidosFinalizados(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao carregar pedidos finalizados: ${error.message}`, 'error');
+    }
 }
 
 async function filtrarPedidosFinalizados() {
-    const nome = filtroNomeFinalizados.value.trim();
+    const nome = document.getElementById('filtroNomeFinalizados').value.trim();
     if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderPedidosFinalizados(await res.json());
+    addLog(`🔍 Filtrando pedidos finalizados por nome: "${nome}"`, 'info');
+    try {
+        const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+        renderPedidosFinalizados(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
+    }
 }
 
 function renderPedidosFinalizados(dados) {
-    tabelaFinalizados.innerHTML = "";
+    const tabela = document.getElementById('tabelaFinalizados');
+    tabela.innerHTML = "";
+
+    if (dados.length === 0) {
+        tabela.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Nenhum pedido finalizado</td></tr>`;
+        return;
+    }
+
     dados.forEach(p => {
-        tabelaFinalizados.innerHTML += `
+        const dataFinalizacao = p.data_finalizacao || p.data_pedido;
+        tabela.innerHTML += `
         <tr>
+            <td>${p.id}</td>
             <td>${p.nome_cliente}</td>
             <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
-            <td>${formatarDataBR(dataAtual)}</td>
+            <td>${formatarDataBR(dataFinalizacao)}</td>
         </tr>`;
     });
 }
 
 function imprimirPedidosFinalizados() {
+    addLog('🖨️ Imprimindo pedidos finalizados...', 'info');
     const tabela = document.querySelector("#finalizados table").outerHTML;
-
     const janela = window.open("", "", "width=900,height=700");
-
     janela.document.write(`
         <!DOCTYPE html>
         <html lang="pt-br">
@@ -289,54 +564,219 @@ function imprimirPedidosFinalizados() {
         </body>
         </html>
     `);
-
     janela.document.close();
     janela.print();
     janela.close();
 }
 
 async function deletarPedidosFinalizados() {
-    if (!confirm("Excluir todos?")) return;
-    await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
-    carregarPedidosFinalizados();
+    if (!confirm("Tem certeza que deseja excluir TODOS os pedidos finalizados?")) return;
+    addLog('🗑️ Deletando todos os pedidos finalizados...', 'warning');
+    try {
+        const response = await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao deletar");
+        addLog('✅ Todos pedidos finalizados foram excluídos', 'info');
+        carregarPedidosFinalizados();
+        alert("Todos os pedidos finalizados foram excluídos!");
+    } catch (error) {
+        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+    }
 }
 
 /* ================= PRODUTOS CLIENTE ================= */
 async function carregarProdutosCliente() {
-    const res = await fetch(`${API}/produtos_cliente`);
-    renderProdutosCliente(await res.json());
+    addLog('📋 Carregando produtos do cliente...', 'info');
+    try {
+        // Carrega preços primeiro se necessário
+        if (Object.keys(precosProdutos).length === 0) {
+            await carregarPrecosProdutos();
+        }
+
+        const res = await fetch(`${API}/produtos_cliente`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+
+        addLog(`✅ ${dados.length} registros carregados`, 'info');
+        renderProdutosCliente(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
+        alert("Erro ao carregar produtos do cliente");
+    }
 }
 
 async function filtrarProdutosCliente() {
-    const nome = filtroNomeProdutosCliente.value.trim();
+    const nome = document.getElementById('filtroNomeProdutosCliente').value.trim();
     if (!nome) return alert("Digite o nome");
-    const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
-    renderProdutosCliente(await res.json());
+    addLog(`🔍 Filtrando produtos por cliente: "${nome}"`, 'info');
+    try {
+        // Carrega preços primeiro se necessário
+        if (Object.keys(precosProdutos).length === 0) {
+            await carregarPrecosProdutos();
+        }
+
+        const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
+        if (!res.ok) throw new Error('Erro na requisição');
+        const dados = await res.json();
+
+        renderProdutosCliente(dados);
+    } catch (error) {
+        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
+    }
 }
 
 function renderProdutosCliente(dados) {
-    tabelaProdutosCliente.innerHTML = "";
-    dados.forEach(p => {
-        tabelaProdutosCliente.innerHTML += `
-        <tr>
-            <td>${p.id}</td>
-            <td>${p.cliente}</td>
-            <td>${p.produto}</td>
-            <td>${p.qtd}</td>
+    const tabela = document.getElementById('tabelaProdutosCliente');
+    tabela.innerHTML = "";
+
+    if (dados.length === 0) {
+        tabela.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Nenhum produto encontrado</td></tr>`;
+        return;
+    }
+
+    dados.forEach(item => {
+        const quantidade = Number(item.qtd);
+        const ehCoxaSobrecoxa = isCoxaSobrecoxa(item.produto);
+
+        // Busca o preço do produto no cache
+        const nomeLower = item.produto.toLowerCase();
+        const precoUnitario = precosProdutos[nomeLower] || 0;
+
+        let classeLinha = '';
+        let quantidadeDisplay = '';
+        let paresDisplay = '';
+        let precoUnitDisplay = '';
+        let valorTotalDisplay = '';
+        let valorCalculado = 0;
+
+        if (ehCoxaSobrecoxa) {
+            classeLinha = 'coxa-sobrecoxa';
+
+            // Para Coxa/Sobrecoxa, a quantidade no banco está EM PARES
+            const pares = quantidade;
+            const pecas = pares * 2;
+
+            // Aplica a tabela de preços especiais
+            const resultado = calcularPrecoCoxaSobrecoxa(pares, precoUnitario);
+            valorCalculado = resultado.preco;
+
+            quantidadeDisplay = `${pecas} peças (${pares} par${pares !== 1 ? 'es' : ''})`;
+            paresDisplay = `<span class="badge-pares">${pares} par${pares !== 1 ? 'es' : ''}</span>`;
+            precoUnitDisplay = `R$ ${precoUnitario.toFixed(2)}`;
+
+            if (resultado.promocao) {
+                valorTotalDisplay = `<span class="valor-promocao">R$ ${valorCalculado.toFixed(2)} (promoção)</span>`;
+            } else {
+                valorTotalDisplay = `<span class="valor-normal">R$ ${valorCalculado.toFixed(2)}</span>`;
+            }
+
+            addLog(`   Coxa/Sobrecoxa: ${pecas} peças = ${pares} pares - R$ ${valorCalculado.toFixed(2)} (preço unit: R$ ${precoUnitario})`, 'debug');
+        } else {
+            // Para outros produtos, calcula com o preço real
+            valorCalculado = quantidade * precoUnitario;
+            quantidadeDisplay = quantidade.toFixed(3);
+            precoUnitDisplay = `R$ ${precoUnitario.toFixed(2)}`;
+            valorTotalDisplay = `<span class="valor-normal">R$ ${valorCalculado.toFixed(2)}</span>`;
+
+            addLog(`   ${item.produto}: ${quantidade} x R$ ${precoUnitario.toFixed(2)} = R$ ${valorCalculado.toFixed(2)}`, 'debug');
+        }
+
+        // Se não encontrou preço, mostra aviso
+        if (precoUnitario === 0) {
+            precoUnitDisplay = '<span class="text-danger">Preço não encontrado</span>';
+            valorTotalDisplay = '<span class="text-danger">? </span>';
+        }
+
+        tabela.innerHTML += `
+        <tr class="${classeLinha}">
+            <td>${item.id}</td>
+            <td><strong>${item.cliente}</strong></td>
+            <td>${item.produto} ${ehCoxaSobrecoxa ? paresDisplay : ''}</td>
+            <td>${quantidadeDisplay}</td>
+            <td>${ehCoxaSobrecoxa ? (quantidade * 2).toFixed(2) + ' peças' : '-'}</td>
+            <td>${precoUnitDisplay}</td>
+            <td>${valorTotalDisplay}</td>
         </tr>`;
     });
+
+    // Calcular totais
+    let totalGeral = 0;
+    dados.forEach(item => {
+        const quantidade = Number(item.qtd);
+        const ehCoxaSobrecoxa = isCoxaSobrecoxa(item.produto);
+        const nomeLower = item.produto.toLowerCase();
+        const precoUnitario = precosProdutos[nomeLower] || 0;
+
+        if (ehCoxaSobrecoxa) {
+            const resultado = calcularPrecoCoxaSobrecoxa(quantidade, precoUnitario);
+            totalGeral += resultado.preco;
+        } else {
+            totalGeral += quantidade * precoUnitario;
+        }
+    });
+
+    // Adicionar linha de total
+    tabela.innerHTML += `
+    <tr class="table-primary">
+        <td colspan="6" class="text-end"><strong>TOTAL GERAL:</strong></td>
+        <td><strong>R$ ${totalGeral.toFixed(2)}</strong></td>
+    </tr>`;
+
+    // Adicionar linha de rodapé com explicação
+    tabela.innerHTML += `
+    <tr class="table-secondary">
+        <td colspan="7" class="text-muted small">
+            <strong>📌 Valores calculados com preços REAIS do banco de dados:</strong><br>
+            • Coxa/Sobrecoxa: quantidade em PARES com tabela promocional especial<br>
+            • Demais produtos: quantidade × preço cadastrado no sistema<br>
+            • Tabela Coxa/Sobrecoxa: 1par=R$10 | 2p=R$20 | 3p=R$25 | 4p=R$35 | 5p=R$40 | 6p=R$50 | Acima=R$10/par
+        </td>
+    </tr>`;
 }
 
 async function deletarProdutosCliente() {
-    if (!confirm("Excluir todos os produtos?")) return;
-    await fetch(`${API}/produto/deletar`, { method: "DELETE" });
-    carregarProdutosCliente();
+    if (!confirm("Tem certeza que deseja excluir TODOS os produtos?")) return;
+    addLog('🗑️ Deletando todos os produtos do cliente...', 'warning');
+    try {
+        const response = await fetch(`${API}/produto/deletar`, { method: "DELETE" });
+        if (!response.ok) throw new Error("Erro ao deletar");
+        addLog('✅ Todos produtos foram excluídos', 'info');
+        carregarProdutosCliente();
+        alert("Todos os produtos foram excluídos!");
+    } catch (error) {
+        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+    }
 }
 
-/* INIT */
-carregarPedidosAbertos();
-carregarPedidosFinalizados();
-carregarProdutosCliente();
+function exportarProdutosCliente() {
+    addLog('📊 Exportando produtos do cliente...', 'info');
+    const tabela = document.querySelector('#produtosCliente table').outerHTML;
+    const janela = window.open('', '', 'width=800,height=600');
+    janela.document.write(`
+        <html>
+        <head><title>Produtos do Cliente</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            .coxa-sobrecoxa { background-color: #fff3cd; }
+            .badge-pares { background-color: #17a2b8; color: white; padding: 2px 5px; border-radius: 10px; }
+        </style>
+        </head>
+        <body><div class="container mt-3">${tabela}</div></body>
+        </html>
+    `);
+}
+
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', async function() {
+    addLog('🚀 Painel Administrativo iniciado', 'info');
+
+    // Carrega preços primeiro
+    await carregarPrecosProdutos();
+
+    // Depois carrega os dados
+    carregarPedidosAbertos();
+    carregarPedidosFinalizados();
+    carregarProdutosCliente();
+});
 </script>
 
 </body>
