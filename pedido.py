@@ -13,7 +13,7 @@ def criar_pedido():
     data = request.get_json()
 
     nome_cliente = data.get("nome_cliente")
-    produtos = data.get("produtos")
+    produtos = data.get("produtos")  # [{produto_id, quantidade}]
 
     if not nome_cliente:
         return jsonify({"erro": "Nome do cliente obrigatório"}), 400
@@ -22,7 +22,7 @@ def criar_pedido():
         return jsonify({"erro": "Pedido sem produtos"}), 400
 
     supabase = connect_db()
-    valor_total = 0.0
+    valor_total = 0
 
     try:
         # 🔹 CRIA PEDIDO
@@ -35,7 +35,6 @@ def criar_pedido():
         pedido_id = pedido.data[0]["id"]
 
         itens = []
-        valor_total_calculado = 0.0
 
         # 🔹 PROCESSA PRODUTOS
         for item in produtos:
@@ -63,16 +62,42 @@ def criar_pedido():
                 }), 400
 
             preco = float(prod_dia.data["preco"])
-            subtotal = round(preco * quantidade, 2)
-            valor_total_calculado = round(valor_total_calculado + subtotal, 2)
 
-            # 🔥 IMPORTANTE: NÃO incluir 'subtotal' aqui!
+            # 🔥 VERIFICA SE É COXA/SOBRECOXA PARA APLICAR TABELA DE PREÇOS
+            nome_produto = prod_dia.data["nome"].lower()
+            if 'coxa' in nome_produto and 'sobrecoxa' in nome_produto:
+                # A quantidade recebida já está em pares (dividida por 2 no frontend)
+                pares = quantidade
+
+                # Aplica a tabela de preços especiais
+                if pares == 1:
+                    subtotal = 10.00
+                elif pares == 2:
+                    subtotal = 20.00
+                elif pares == 3:
+                    subtotal = 25.00
+                elif pares == 4:
+                    subtotal = 35.00
+                elif pares == 5:
+                    subtotal = 40.00
+                elif pares == 6:
+                    subtotal = 50.00
+                else:
+                    # Acima de 6 pares, preço normal
+                    subtotal = preco * pares
+
+                print(f"🔥 Coxa/Sobrecoxa: {pares} pares = R$ {subtotal}")
+            else:
+                # Produto normal
+                subtotal = preco * quantidade
+
+            valor_total += subtotal
+
             itens.append({
                 "pedido_id": pedido_id,
                 "produto_id": produto_id,
                 "quantidade": quantidade,
                 "preco_unitario": preco
-                # NÃO ADICIONE 'subtotal' - essa coluna não existe!
             })
 
             # 🔻 BAIXA ESTOQUE
@@ -83,41 +108,18 @@ def criar_pedido():
         if not itens:
             return jsonify({"erro": "Pedido sem itens válidos"}), 400
 
-        # 🔹 INSERE ITENS (sem a coluna subtotal)
+        # 🔹 INSERE ITENS
         supabase.table("itens_pedido").insert(itens).execute()
 
         # 🔹 ATUALIZA TOTAL
         supabase.table("pedido").update({
-            "valor_total": valor_total_calculado
+            "valor_total": valor_total
         }).eq("id", pedido_id).execute()
-
-        # 🔹 INSERE NA TABELA produto_cliente
-        for item in produtos:
-            produto_id = item.get("produto_id")
-            quantidade = float(item.get("quantidade", 1))
-
-            # Busca o nome do produto
-            prod_dia = (
-                supabase
-                .table("produto_dia")
-                .select("nome")
-                .eq("id", produto_id)
-                .single()
-                .execute()
-            )
-
-            if prod_dia.data:
-                supabase.table("produto_cliente").insert({
-                    "cliente": nome_cliente,
-                    "produto": prod_dia.data["nome"],
-                    "qtd": quantidade
-                }).execute()
 
         return jsonify({
             "mensagem": "Pedido criado com sucesso",
             "pedido_id": pedido_id,
-            "valor_total": valor_total_calculado,
-            "itens": len(itens)
+            "valor_total": valor_total
         }), 201
 
     except Exception as e:
