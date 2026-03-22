@@ -2,13 +2,23 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Home - Pedido</title>
+    <title>Home - Novo Pedido</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* Estilo para o console de logs */
+        body { background-color: #f8f9fa; }
+        .card { border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .table th { background-color: #e9ecef; }
+        .coxa-sobrecoxa-badge {
+            background-color: #ffc107;
+            color: #000;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 5px;
+        }
         .console-log {
             background-color: #1e1e1e;
             color: #00ff00;
@@ -19,7 +29,6 @@
             overflow-y: auto;
             font-size: 12px;
             margin-top: 20px;
-            border: 1px solid #333;
         }
         .log-info { color: #00ff00; }
         .log-warning { color: #ffaa00; }
@@ -30,345 +39,246 @@
 <body class="bg-light">
 
 <div class="container mt-4">
-
-    <h2 class="mb-4">🛒 Novo Pedido</h2>
-
-    <!-- Nome do cliente -->
-    <div class="mb-3">
-        <label class="form-label">Nome do Cliente</label>
-        <input
-            type="text"
-            id="nomeCliente"
-            class="form-control"
-            placeholder="Digite o nome">
-    </div>
-
-    <!-- Botão para mostrar/esconder logs -->
-    <div class="mb-2">
-        <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLogs()">
-            🖥️ Mostrar/Esconder Logs
-        </button>
-    </div>
-
-    <!-- Console de logs -->
-    <div id="consoleLogs" class="console-log mb-3" style="display: none;">
-        <div id="logMessages"></div>
-    </div>
-
-    <!-- Produtos do dia -->
-    <h4 class="mt-4">Produtos do Dia</h4>
-
-    <table class="table table-bordered mt-2">
-        <thead class="table-light">
-            <tr>
-                <th>Produto</th>
-                <th>Preço</th>
-                <th>Estoque</th>
-                <th class="text-center">Quantidade</th>
-            </tr>
-        </thead>
-        <tbody id="listaProdutos"></tbody>
-    </table>
-
-    <!-- Itens do pedido -->
-    <h4 class="mt-4">Itens do Pedido</h4>
-    <table class="table table-sm">
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Preço</th>
-            </tr>
-        </thead>
-        <tbody id="itensPedido"></tbody>
-    </table>
-
-    <div class="row mt-3">
-        <div class="col-md-8">
-            <h5 id="valorTotalDisplay" class="text-end">Total: R$ 0.00</h5>
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">🛒 Novo Pedido</h2>
         </div>
-        <div class="col-md-4">
-            <button class="btn btn-primary w-100" onclick="criarPedido()">
-                Criar Pedido
-            </button>
+        <div class="card-body">
+
+            <!-- Nome do cliente -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nome do Cliente</label>
+                <input type="text" id="nomeCliente" class="form-control" placeholder="Digite o nome">
+            </div>
+
+            <!-- Botões de log -->
+            <div class="mb-2">
+                <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLogs()">
+                    🖥️ Mostrar Logs
+                </button>
+                <button class="btn btn-sm btn-warning" type="button" onclick="limparLogs()">
+                    🧹 Limpar Logs
+                </button>
+            </div>
+
+            <!-- Console de logs -->
+            <div id="consoleLogs" class="console-log mb-3" style="display: none;">
+                <div id="logMessages"></div>
+            </div>
+
+            <!-- Produtos do dia -->
+            <h4 class="mt-4">📦 Produtos do Dia</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço</th>
+                            <th>Estoque</th>
+                            <th class="text-center">Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaProdutos"></tbody>
+                </table>
+            </div>
+
+            <!-- Itens do pedido -->
+            <h4 class="mt-4">🛍️ Itens do Pedido</h4>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Preço</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itensPedido"></tbody>
+                </table>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-8">
+                    <h4 id="valorTotalDisplay" class="text-end text-primary">Total: R$ 0.00</h4>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100" onclick="criarPedido()">
+                        ✅ Criar Pedido
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
-
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-const BASE_URL = "https://vendas-svoq.onrender.com";
+const BASE_URL = "http://127.0.0.1:5000";
 
 let produtosDia = [];
 let produtosSelecionados = [];
 let logsVisiveis = false;
 
-// Função para adicionar logs
+// ===== FUNÇÕES DE LOG =====
 function addLog(mensagem, tipo = 'info') {
     const logDiv = document.getElementById('logMessages');
     const timestamp = new Date().toLocaleTimeString('pt-BR', { hour12: false });
-    const cor = tipo === 'error' ? 'log-error' : tipo === 'warning' ? 'log-warning' : tipo === 'debug' ? 'log-debug' : 'log-info';
+    let cor = '#00ff00';
+    if (tipo === 'error') cor = '#ff5555';
+    if (tipo === 'warning') cor = '#ffaa00';
+    if (tipo === 'debug') cor = '#8888ff';
 
-    logDiv.innerHTML += `<div class="${cor}">[${timestamp}] ${mensagem}</div>`;
-
-    // Rolar para o final
+    logDiv.innerHTML += `<div style="color: ${cor}">[${timestamp}] ${mensagem}</div>`;
     const consoleDiv = document.getElementById('consoleLogs');
     consoleDiv.scrollTop = consoleDiv.scrollHeight;
-
-    // Também mostra no console do navegador
     console.log(`[${timestamp}] ${mensagem}`);
 }
 
 function toggleLogs() {
     logsVisiveis = !logsVisiveis;
     document.getElementById('consoleLogs').style.display = logsVisiveis ? 'block' : 'none';
-    if (logsVisiveis) {
-        addLog('🔍 Logs ativados', 'info');
-    }
+    if (logsVisiveis) addLog('🔍 Logs ativados', 'info');
 }
 
-// Função para limpar logs
 function limparLogs() {
     document.getElementById('logMessages').innerHTML = '';
     addLog('🧹 Logs limpos', 'info');
 }
 
-// Função para verificar categorias de produtos
+// ===== FUNÇÕES DE CATEGORIZAÇÃO =====
 function isCategoria1(nome) {
     const produtos = ['pernil', 'costelinha', 'panceta', 'lombo', 'copa lombo', 'joelho'];
-    const resultado = produtos.some(p => nome.toLowerCase().includes(p));
-    addLog(`🔍 isCategoria1("${nome}") = ${resultado}`, 'debug');
-    return resultado;
+    return produtos.some(p => nome.toLowerCase().includes(p));
 }
 
 function isCategoria2(nome) {
-    const resultado = nome && nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
-    if (resultado) {
-        addLog(`🔍 isCategoria2("${nome}") = true (Coxa/Sobrecoxa)`, 'debug');
-    }
-    return resultado;
+    return nome && nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
 }
 
 function isCategoria3(nome) {
-    const resultado = nome && nome.toLowerCase().includes('frango') && nome.toLowerCase().includes('recheado');
-    if (resultado) {
-        addLog(`🔍 isCategoria3("${nome}") = true (Frango Recheado)`, 'debug');
-    }
-    return resultado;
+    return nome && nome.toLowerCase().includes('frango') && nome.toLowerCase().includes('recheado');
 }
 
 function isCategoria4(nome) {
     const produtos = ['lasanha', 'maionese', 'salpicão', 'salpicao', 'feijão tropeiro', 'feijao tropeiro'];
-    const resultado = produtos.some(p => nome.toLowerCase().includes(p));
-    if (resultado) {
-        addLog(`🔍 isCategoria4("${nome}") = true (Lasanha/Maionese/Salpicão/Feijão)`, 'debug');
-    }
-    return resultado;
+    return produtos.some(p => nome.toLowerCase().includes(p));
 }
 
 // Função para obter o incremento baseado no produto
 function getIncremento(nome) {
-    let incremento;
     if (isCategoria2(nome)) {
-        incremento = 2;
-        addLog(`📊 getIncremento("${nome}") = ${incremento} (Coxa/Sobrecoxa)`, 'debug');
+        return 1; // Coxa/Sobrecoxa: pula de 1 em 1 (cada clique = 1 par)
     } else if (isCategoria3(nome)) {
-        incremento = 1;
-        addLog(`📊 getIncremento("${nome}") = ${incremento} (Frango Recheado)`, 'debug');
+        return 1; // Frango Recheado: pula de 1 em 1
+    } else if (isCategoria4(nome)) {
+        return 0.5; // Lasanha, Maionese, Salpicão, Feijão: pula de 0.5 em 0.5
     } else {
-        incremento = 0.1;
-        addLog(`📊 getIncremento("${nome}") = ${incremento} (Demais produtos)`, 'debug');
+        return 0.1; // Pernil, Costelinha, etc: incremento pequeno
     }
-    return incremento;
 }
 
-// Função para obter a quantidade real para cálculo (antes de enviar)
 function getQuantidadeReal(nome, quantidade) {
-    let quantidadeReal;
-    if (isCategoria2(nome)) {
-        quantidadeReal = quantidade / 2;
-        addLog(`🔄 getQuantidadeReal("${nome}", ${quantidade}) = ${quantidadeReal} (dividido por 2)`, 'debug');
-    } else {
-        quantidadeReal = quantidade;
-        addLog(`🔄 getQuantidadeReal("${nome}", ${quantidade}) = ${quantidadeReal} (mantido)`, 'debug');
-    }
-    return quantidadeReal;
-}
-
-// Função para calcular o preço da Coxa/Sobrecoxa baseado na quantidade de pares
-function calcularPrecoCoxaSobrecoxa(pares, precoUnitario) {
-    addLog(`💰 calcularPrecoCoxaSobrecoxa(${pares} pares, preço unitário R$ ${precoUnitario})`, 'debug');
-
-    if (pares <= 0) {
-        addLog(`   → Pares <= 0, retornando 0`, 'debug');
-        return 0;
-    }
-
-    let preco;
-    if (pares === 1) {
-        preco = 10.00;
-        addLog(`   → 1 par: R$ 10,00 (promoção)`, 'info');
-    } else if (pares === 2) {
-        preco = 20.00;
-        addLog(`   → 2 pares: R$ 20,00 (promoção)`, 'info');
-    } else if (pares === 3) {
-        preco = 25.00;
-        addLog(`   → 3 pares: R$ 25,00 (promoção)`, 'info');
-    } else if (pares === 4) {
-        preco = 35.00;
-        addLog(`   → 4 pares: R$ 35,00 (promoção)`, 'info');
-    } else if (pares === 5) {
-        preco = 40.00;
-        addLog(`   → 5 pares: R$ 40,00 (promoção)`, 'info');
-    } else if (pares === 6) {
-        preco = 50.00;
-        addLog(`   → 6 pares: R$ 50,00 (promoção)`, 'info');
-    } else {
-        preco = precoUnitario * pares;
-        addLog(`   → Acima de 6 pares (${pares}): R$ ${precoUnitario} × ${pares} = R$ ${preco.toFixed(2)} (preço normal)`, 'info');
-    }
-
-    return preco;
-}
-
-// Função para calcular o subtotal de um item
-function calcularSubtotal(item) {
-    addLog(`🧮 calcularSubtotal para ${item.nome} (ID: ${item.produto_id}, quantidade: ${item.quantidade})`, 'debug');
-
-    const produto = produtosDia.find(p => p.id === item.produto_id);
-    if (!produto) {
-        addLog(`   ❌ ERRO: Produto não encontrado!`, 'error');
-        return 0;
-    }
-
-    addLog(`   Produto encontrado: ${produto.nome}, preço: R$ ${produto.preco}, estoque: ${produto.qtd}`, 'debug');
-
-    const quantidadeReal = getQuantidadeReal(item.nome, item.quantidade);
-    addLog(`   Quantidade real: ${quantidadeReal}`, 'debug');
-
-    let subtotal;
-    if (isCategoria2(item.nome)) {
-        const pares = item.quantidade / 2;
-        addLog(`   → Coxa/Sobrecoxa: ${item.quantidade} peças = ${pares} pares`, 'debug');
-        subtotal = calcularPrecoCoxaSobrecoxa(pares, produto.preco);
-    } else {
-        subtotal = quantidadeReal * produto.preco;
-        addLog(`   → Cálculo normal: ${quantidadeReal} × R$ ${produto.preco} = R$ ${subtotal.toFixed(2)}`, 'debug');
-    }
-
-    addLog(`   ✅ Subtotal: R$ ${subtotal.toFixed(2)}`, 'info');
-    return subtotal;
-}
-
-// Função para calcular o valor total do pedido
-function calcularValorTotal() {
-    addLog(`💰💰💰 CALCULANDO VALOR TOTAL`, 'info');
-    let total = 0;
-    produtosSelecionados.forEach((item, index) => {
-        addLog(`📦 Item ${index + 1}: ${item.nome} (${item.quantidade})`, 'debug');
-        total += calcularSubtotal(item);
-    });
-    addLog(`💰💰💰 VALOR TOTAL: R$ ${total.toFixed(2)}`, 'info');
-    return total;
-}
-
-// Função para atualizar o display do valor total
-function atualizarValorTotal() {
-    const total = calcularValorTotal();
-    document.getElementById('valorTotalDisplay').innerHTML = `Total: R$ ${total.toFixed(2)}`;
-    addLog(`🔄 Display atualizado: R$ ${total.toFixed(2)}`, 'debug');
+    return quantidade; // O backend já recebe em pares para Coxa/Sobrecoxa
 }
 
 // Função para arredondar conforme a categoria
 function arredondarQuantidade(valor, nome) {
-    addLog(`🔄 arredondarQuantidade(${valor}, "${nome}")`, 'debug');
-    let valorArredondado;
-
     if (isCategoria2(nome)) {
-        valorArredondado = Math.round(valor / 2) * 2;
-        addLog(`   → Coxa/Sobrecoxa: múltiplos de 2 → ${valorArredondado}`, 'debug');
+        // Coxa/Sobrecoxa: números inteiros (pares)
+        return Math.round(valor); // ANTES ERA: Math.round(valor / 2) * 2;
     } else if (isCategoria3(nome)) {
-        valorArredondado = Math.round(valor);
-        addLog(`   → Frango Recheado: inteiro → ${valorArredondado}`, 'debug');
+        // Frango Recheado: inteiros
+        return Math.round(valor);
+    } else if (isCategoria4(nome)) {
+        // Lasanha, etc: múltiplos de 0.5
+        return Math.round(valor * 2) / 2;
     } else {
-        valorArredondado = Math.round(valor * 1000) / 1000;
-        addLog(`   → Demais: 3 casas decimais → ${valorArredondado}`, 'debug');
+        // Demais categorias: 3 casas decimais
+        return Math.round(valor * 1000) / 1000;
     }
-
-    return valorArredondado;
 }
 
 // Função para formatar a exibição da quantidade
 function formatarQuantidade(valor, nome) {
-    let formatado;
     if (isCategoria2(nome)) {
-        formatado = valor.toFixed(2);
-        addLog(`📝 formatarQuantidade(${valor}, "${nome}") = ${formatado} (2 casas)`, 'debug');
+        return valor.toFixed(0); // Coxa/Sobrecoxa mostra inteiro (pares)
     } else if (isCategoria3(nome)) {
-        formatado = valor.toFixed(0);
-        addLog(`📝 formatarQuantidade(${valor}, "${nome}") = ${formatado} (0 casas)`, 'debug');
+        return valor.toFixed(0); // Frango Recheado mostra inteiro
+    } else if (isCategoria4(nome)) {
+        return valor.toFixed(1); // Lasanha, etc mostra 1 casa
     } else {
-        formatado = valor.toFixed(3);
-        addLog(`📝 formatarQuantidade(${valor}, "${nome}") = ${formatado} (3 casas)`, 'debug');
+        return valor.toFixed(3); // Demais mostra 3 casas
     }
-    return formatado;
 }
 
-// Função para atualizar quantidade via input
-function atualizarQuantidadeInput(id, nome) {
-    addLog(`📝 atualizarQuantidadeInput(ID: ${id}, Produto: "${nome}")`, 'info');
-    const input = document.getElementById(`input-qtd-${id}`);
-    if (!input) {
-        addLog(`   ❌ Input não encontrado!`, 'error');
-        return;
+// ===== FUNÇÕES DE CÁLCULO =====
+function calcularPrecoCoxaSobrecoxa(pares) {
+    if (pares <= 0) return 0;
+
+    if (pares === 1) return 10.00;
+    else if (pares === 2) return 20.00;
+    else if (pares === 3) return 25.00;
+    else if (pares === 4) return 35.00;
+    else if (pares === 5) return 40.00;
+    else if (pares === 6) return 50.00;
+    else {
+        const paresAdicionais = pares - 6;
+        return 50.00 + (paresAdicionais * 10);
     }
+}
+
+function calcularSubtotal(item) {
+    const produto = produtosDia.find(p => p.id === item.produto_id);
+    if (!produto) return 0;
+
+    if (isCategoria2(item.nome)) {
+        return calcularPrecoCoxaSobrecoxa(item.quantidade);
+    } else {
+        return item.quantidade * produto.preco;
+    }
+}
+
+function calcularValorTotal() {
+    let total = 0;
+    produtosSelecionados.forEach(item => {
+        total += calcularSubtotal(item);
+    });
+    return total;
+}
+
+function atualizarValorTotal() {
+    const total = calcularValorTotal();
+    document.getElementById('valorTotalDisplay').innerHTML = `Total: R$ ${total.toFixed(2)}`;
+}
+
+// ===== FUNÇÃO DE INPUT =====
+function atualizarQuantidadeInput(id, nome) {
+    const input = document.getElementById(`input-qtd-${id}`);
+    if (!input) return;
 
     let valor = parseFloat(input.value);
-    addLog(`   Valor digitado: ${valor}`, 'debug');
-
-    // Validação
-    if (isNaN(valor) || valor < 0) {
-        addLog(`   ⚠️ Valor inválido, ajustando para 0`, 'warning');
-        valor = 0;
-    }
+    if (isNaN(valor) || valor < 0) valor = 0;
 
     const produto = produtosDia.find(p => p.id === id);
-    if (!produto) {
-        addLog(`   ❌ Produto não encontrado!`, 'error');
-        return;
-    }
+    if (!produto) return;
 
-    // Limita ao estoque
-    const quantidadeReal = getQuantidadeReal(nome, valor);
-    addLog(`   Quantidade real: ${quantidadeReal}, Estoque: ${produto.qtd}`, 'debug');
+    valor = arredondarQuantidade(valor, nome);
 
-    if (quantidadeReal > produto.qtd) {
-        addLog(`   ⚠️ Quantidade (${quantidadeReal}) excede estoque (${produto.qtd})`, 'warning');
-        if (isCategoria2(nome)) {
-            valor = Math.floor(produto.qtd * 2);
-            addLog(`   → Ajustando para ${valor} (múltiplo de 2)`);
-        } else {
-            valor = produto.qtd;
-            addLog(`   → Ajustando para ${valor}`);
-        }
+    if (valor > produto.qtd) {
+        valor = produto.qtd;
         input.value = formatarQuantidade(valor, nome);
     }
 
     let item = produtosSelecionados.find(p => p.produto_id === id);
 
     if (valor <= 0) {
-        addLog(`   🗑️ Removendo produto (quantidade <= 0)`);
         produtosSelecionados = produtosSelecionados.filter(p => p.produto_id !== id);
     } else {
         if (!item) {
-            addLog(`   ➕ Adicionando novo produto com quantidade ${valor}`);
-            produtosSelecionados.push({
-                produto_id: id,
-                nome,
-                quantidade: valor
-            });
+            produtosSelecionados.push({ produto_id: id, nome, quantidade: valor });
         } else {
-            addLog(`   🔄 Atualizando quantidade de ${item.quantidade} para ${valor}`);
             item.quantidade = valor;
         }
     }
@@ -378,19 +288,12 @@ function atualizarQuantidadeInput(id, nome) {
     atualizarValorTotal();
 }
 
-/* ===============================
-   PRODUTOS DO DIA
-================================ */
+// ===== CARREGAR PRODUTOS =====
 async function carregarProdutosDia() {
-    addLog(`🌐 Carregando produtos do dia da API: ${BASE_URL}/produto_dia`, 'info');
     try {
         const resp = await fetch(`${BASE_URL}/produto_dia`);
         produtosDia = await resp.json();
         addLog(`✅ Produtos carregados: ${produtosDia.length} itens`, 'info');
-
-        produtosDia.forEach((p, i) => {
-            addLog(`   ${i+1}. ${p.nome} - R$ ${p.preco} - Estoque: ${p.qtd}`, 'debug');
-        });
 
         const tbody = document.getElementById("listaProdutos");
         tbody.innerHTML = "";
@@ -399,58 +302,36 @@ async function carregarProdutosDia() {
             const item = produtosSelecionados.find(i => i.produto_id === p.id);
             let qtdSelecionada = item ? item.quantidade : 0;
             const incremento = getIncremento(p.nome);
-
-            // Verificar se o produto deve ter input livre (categorias 1 e 4)
             const temInputLivre = isCategoria1(p.nome) || isCategoria4(p.nome);
 
-            // Garantir que a quantidade esteja arredondada corretamente
             if (item) {
                 qtdSelecionada = arredondarQuantidade(qtdSelecionada, p.nome);
                 item.quantidade = qtdSelecionada;
             }
 
-            // Verifica se pode incrementar
-            const quantidadeReal = getQuantidadeReal(p.nome, qtdSelecionada);
-            const proximaQuantidadeReal = getQuantidadeReal(p.nome, qtdSelecionada + incremento);
-            const podeIncrementar = proximaQuantidadeReal <= p.qtd;
-            const disabledMais = !podeIncrementar ? "disabled" : "";
-
-            // Verifica se pode decrementar
+            const podeIncrementar = (qtdSelecionada + incremento) <= p.qtd;
             const podeDecrementar = qtdSelecionada > 0;
-            const disabledMenos = !podeDecrementar ? "disabled" : "";
-
-            // Formata a exibição da quantidade
             const qtdDisplay = formatarQuantidade(qtdSelecionada, p.nome);
 
             if (temInputLivre) {
                 tbody.innerHTML += `
                     <tr>
-                        <td>${p.nome}</td>
+                        <td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}</td>
                         <td>R$ ${p.preco.toFixed(2)}</td>
                         <td>${p.qtd}</td>
                         <td class="text-center">
                             <div class="d-flex align-items-center justify-content-center">
                                 <button class="btn btn-outline-danger btn-sm me-1"
-                                    ${disabledMenos}
-                                    onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
-                                    −
-                                </button>
-
-                                <input type="number"
-                                    id="input-qtd-${p.id}"
+                                    ${!podeDecrementar ? 'disabled' : ''}
+                                    onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
+                                <input type="number" id="input-qtd-${p.id}"
                                     class="form-control form-control-sm text-center mx-1"
-                                    style="width: 100px;"
-                                    step="0.001"
-                                    min="0"
-                                    max="${p.qtd}"
+                                    style="width: 100px;" step="0.001" min="0" max="${p.qtd}"
                                     value="${qtdSelecionada}"
                                     onchange="atualizarQuantidadeInput(${p.id}, '${p.nome}')">
-
                                 <button class="btn btn-outline-success btn-sm ms-1"
-                                    ${disabledMais}
-                                    onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">
-                                    +
-                                </button>
+                                    ${!podeIncrementar ? 'disabled' : ''}
+                                    onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
                             </div>
                         </td>
                     </tr>
@@ -458,23 +339,17 @@ async function carregarProdutosDia() {
             } else {
                 tbody.innerHTML += `
                     <tr>
-                        <td>${p.nome}</td>
+                        <td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}</td>
                         <td>R$ ${p.preco.toFixed(2)}</td>
                         <td>${p.qtd}</td>
                         <td class="text-center">
                             <button class="btn btn-outline-danger btn-sm"
-                                ${disabledMenos}
-                                onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">
-                                −
-                            </button>
-
+                                ${!podeDecrementar ? 'disabled' : ''}
+                                onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
                             <span class="mx-2 fw-bold">${qtdDisplay}</span>
-
                             <button class="btn btn-outline-success btn-sm"
-                                ${disabledMais}
-                                onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">
-                                +
-                            </button>
+                                ${!podeIncrementar ? 'disabled' : ''}
+                                onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
                         </td>
                     </tr>
                 `;
@@ -482,65 +357,31 @@ async function carregarProdutosDia() {
         });
 
         atualizarValorTotal();
-        addLog(`✅ Tabela de produtos atualizada`, 'info');
     } catch (error) {
         addLog(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
     }
 }
 
-/* ===============================
-   ALTERAR QUANTIDADE
-================================ */
+// ===== ALTERAR QUANTIDADE =====
 function alterarQuantidade(id, nome, delta) {
-    addLog(`🔄 alterarQuantidade(ID: ${id}, Produto: "${nome}", Delta: ${delta})`, 'info');
-
     const produto = produtosDia.find(p => p.id === id);
-    if (!produto) {
-        addLog(`   ❌ Produto não encontrado!`, 'error');
-        return;
-    }
-
     let item = produtosSelecionados.find(p => p.produto_id === id);
 
     if (!item && delta > 0) {
         let quantidadeInicial = Math.abs(delta);
         quantidadeInicial = arredondarQuantidade(quantidadeInicial, nome);
-        addLog(`   ➕ Novo item com quantidade inicial ${quantidadeInicial}`);
-
-        produtosSelecionados.push({
-            produto_id: id,
-            nome,
-            quantidade: quantidadeInicial
-        });
+        produtosSelecionados.push({ produto_id: id, nome, quantidade: quantidadeInicial });
     } else if (item) {
         let novaQuantidade = item.quantidade + delta;
-        addLog(`   🔄 Quantidade atual: ${item.quantidade} → nova: ${novaQuantidade}`);
-
         novaQuantidade = arredondarQuantidade(novaQuantidade, nome);
-        addLog(`   🔄 Após arredondamento: ${novaQuantidade}`);
 
-        const quantidadeReal = getQuantidadeReal(nome, novaQuantidade);
-        addLog(`   📊 Quantidade real: ${quantidadeReal}, Estoque: ${produto.qtd}`);
-
-        if (quantidadeReal > produto.qtd) {
-            addLog(`   ⚠️ Quantidade excede estoque, ajustando...`, 'warning');
-            if (isCategoria2(nome)) {
-                let maxPossivel = Math.floor(produto.qtd * 2);
-                novaQuantidade = Math.floor(maxPossivel / 2) * 2;
-                addLog(`   → Coxa/Sobrecoxa: máximo ${maxPossivel} peças = ${novaQuantidade} (${novaQuantidade/2} pares)`);
-            } else {
-                novaQuantidade = produto.qtd;
-                addLog(`   → Ajustando para máximo: ${novaQuantidade}`);
-            }
+        if (novaQuantidade > produto.qtd) {
+            novaQuantidade = produto.qtd;
         }
 
         if (novaQuantidade <= 0) {
-            addLog(`   🗑️ Removendo item (quantidade <= 0)`);
-            produtosSelecionados = produtosSelecionados.filter(
-                p => p.produto_id !== id
-            );
+            produtosSelecionados = produtosSelecionados.filter(p => p.produto_id !== id);
         } else {
-            addLog(`   ✅ Quantidade final: ${novaQuantidade}`);
             item.quantidade = novaQuantidade;
         }
     }
@@ -550,20 +391,14 @@ function alterarQuantidade(id, nome, delta) {
     atualizarValorTotal();
 }
 
-/* ===============================
-   RENDERIZAR ITENS
-================================ */
+// ===== RENDERIZAR ITENS =====
 function renderizarItens() {
-    addLog(`📋 Renderizando itens do pedido (${produtosSelecionados.length} itens)`, 'info');
-
     const tbody = document.getElementById("itensPedido");
     tbody.innerHTML = "";
 
-    produtosSelecionados.forEach((p, index) => {
+    produtosSelecionados.forEach(p => {
         const qtdDisplay = formatarQuantidade(p.quantidade, p.nome);
         const subtotal = calcularSubtotal(p);
-
-        addLog(`   Item ${index+1}: ${p.nome} - ${qtdDisplay} - R$ ${subtotal.toFixed(2)}`, 'debug');
 
         tbody.innerHTML += `
             <tr>
@@ -573,64 +408,42 @@ function renderizarItens() {
             </tr>
         `;
     });
-
-    addLog(`✅ Itens renderizados`, 'info');
 }
 
-/* ===============================
-   CRIAR PEDIDO
-================================ */
+// ===== CRIAR PEDIDO =====
 async function criarPedido() {
-    addLog(`📦📦📦 CRIANDO PEDIDO 📦📦📦`, 'info');
-
-    const cliente = document
-        .getElementById("nomeCliente")
-        .value
-        .trim()
-        .toUpperCase();
-
-    addLog(`👤 Cliente: "${cliente}"`, 'info');
+    const cliente = document.getElementById("nomeCliente").value.trim().toUpperCase();
 
     if (!cliente) {
-        addLog(`❌ Erro: Nome do cliente obrigatório`, 'error');
         alert("Nome obrigatório");
         return;
     }
 
     if (produtosSelecionados.length === 0) {
-        addLog(`❌ Erro: Nenhum produto selecionado`, 'error');
         alert("Selecione produtos");
         return;
     }
 
-    addLog(`📦 Produtos selecionados: ${produtosSelecionados.length} itens`, 'info');
-
-    // Validação e ajuste das quantidades
     for (const item of produtosSelecionados) {
-        addLog(`   Validando ${item.nome} (quantidade: ${item.quantidade})`, 'debug');
         item.quantidade = arredondarQuantidade(item.quantidade, item.nome);
-
         if (item.quantidade <= 0) {
-            addLog(`   ❌ Quantidade inválida para ${item.nome}`, 'error');
-            alert(`Quantidade inválida para o produto ${item.nome}`);
+            alert(`Quantidade inválida para ${item.nome}`);
             return;
         }
     }
 
     const valorTotalCalculado = calcularValorTotal();
-    addLog(`💰 Valor total calculado: R$ ${valorTotalCalculado.toFixed(2)}`, 'info');
 
     try {
         const payload = {
             nome_cliente: cliente,
             produtos: produtosSelecionados.map(p => ({
                 produto_id: p.produto_id,
-                quantidade: getQuantidadeReal(p.nome, p.quantidade)
+                quantidade: p.quantidade
             }))
         };
 
-        addLog(`📤 Enviando payload para API: ${BASE_URL}/pedido`, 'info');
-        addLog(`📤 Payload: ${JSON.stringify(payload, null, 2)}`, 'debug');
+        addLog(`📤 Enviando pedido: ${JSON.stringify(payload)}`, 'debug');
 
         const resp = await fetch(`${BASE_URL}/pedido`, {
             method: "POST",
@@ -639,91 +452,27 @@ async function criarPedido() {
         });
 
         const data = await resp.json();
-        addLog(`📥 Resposta da API: ${JSON.stringify(data)}`, 'debug');
 
         if (!resp.ok) {
-            addLog(`❌ Erro na API: ${data.erro || "Erro desconhecido"}`, 'error');
             alert(data.erro || "Erro ao criar pedido");
             return;
         }
 
-        addLog(`✅ Pedido criado com sucesso! ID: ${data.pedido_id}`, 'info');
+        alert(`✅ Pedido criado! ID: ${data.pedido_id} - Total: R$ ${data.valor_total.toFixed(2)}`);
 
-        // Inserir na tabela produtos_cliente
-        addLog(`📤 Inserindo produtos na tabela produtos_cliente...`, 'info');
-
-        const produtosAgrupados = {};
-        produtosSelecionados.forEach(item => {
-            const chave = item.nome;
-            const quantidadeReal = getQuantidadeReal(item.nome, item.quantidade);
-
-            if (produtosAgrupados[chave]) {
-                produtosAgrupados[chave].qtd += quantidadeReal;
-                addLog(`   ➕ Somando ${item.nome}: +${quantidadeReal} = ${produtosAgrupados[chave].qtd}`, 'debug');
-            } else {
-                produtosAgrupados[chave] = {
-                    cliente: cliente,
-                    produto: item.nome,
-                    qtd: quantidadeReal
-                };
-                addLog(`   ➕ Novo produto: ${item.nome} = ${quantidadeReal}`, 'debug');
-            }
-        });
-
-        for (const produtoNome in produtosAgrupados) {
-            const item = produtosAgrupados[produtoNome];
-            addLog(`   📤 Inserindo ${item.produto} - ${item.qtd}`, 'debug');
-
-            const response = await fetch(`${BASE_URL}/produtos_cliente`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    cliente: item.cliente,
-                    produto: item.produto,
-                    qtd: item.qtd
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                addLog(`   ❌ Erro ao inserir ${item.produto}: ${JSON.stringify(errorData)}`, 'error');
-                console.error(`Erro ao adicionar produto ${item.produto}:`, errorData);
-            } else {
-                addLog(`   ✅ ${item.produto} inserido com sucesso`, 'info');
-            }
-        }
-
-        alert(`✅ Pedido criado com sucesso!\nValor total: R$ ${valorTotalCalculado.toFixed(2)}`);
-
-        /* Reset */
         produtosSelecionados = [];
         document.getElementById("nomeCliente").value = "";
         renderizarItens();
         carregarProdutosDia();
         atualizarValorTotal();
 
-        addLog(`🔄 Sistema resetado para novo pedido`, 'info');
-
     } catch (error) {
-        addLog(`❌ Erro de conexão: ${error.message}`, 'error');
-        alert("Erro de conexão com o servidor");
+        alert("Erro de conexão");
         console.error(error);
     }
 }
 
-// Adiciona botão para limpar logs
-document.addEventListener('DOMContentLoaded', function() {
-    const btnContainer = document.querySelector('.mb-2');
-    const btnLimpar = document.createElement('button');
-    btnLimpar.className = 'btn btn-sm btn-warning ms-2';
-    btnLimpar.innerHTML = '🧹 Limpar Logs';
-    btnLimpar.onclick = limparLogs;
-    btnContainer.appendChild(btnLimpar);
-
-    addLog('🚀 Sistema iniciado', 'info');
-});
-
-/* INIT */
+// ===== INICIALIZAÇÃO =====
 carregarProdutosDia();
 </script>
 
