@@ -8,34 +8,397 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        body { background-color: #f4f6f9; }
-        .card { border-radius: 12px; }
-        .table th, .table td { vertical-align: middle; }
+        /* ========== TEMA CLARO ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: #1e293b;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 1400px;
+            padding: 1.5rem;
+        }
+
+        /* Cards */
+        .card { 
+            border-radius: 20px; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-body {
+            background: #ffffff;
+            padding: 1.5rem;
+        }
+
+        /* Títulos */
+        h2.fw-bold {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h4, h5 {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Tabelas */
+        .table { 
+            color: #1e293b;
+            border-color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .table th { 
+            background: #f1f5f9;
+            color: #0f172a;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-color: #e2e8f0;
+            padding: 12px 8px;
+        }
+        
+        .table td { 
+            background-color: #ffffff;
+            border-color: #e2e8f0;
+            vertical-align: middle;
+            padding: 12px 8px;
+        }
+        
+        .table-hover tbody tr:hover td {
+            background-color: #f8fafc;
+            transition: background-color 0.2s;
+        }
+        
+        /* Cabeçalhos específicos por aba */
+        .table-dark th {
+            background: #1e293b !important;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+        
+        .table-success th {
+            background: #dcfce7 !important;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+        
+        .table-info th {
+            background: #dbeafe !important;
+            color: #1e40af;
+            border-color: #bfdbfe;
+        }
+        
+        /* Destaque para Coxa/Sobrecoxa */
         .coxa-sobrecoxa {
-            background-color: #fff3cd;
-            font-weight: bold;
+            background-color: #fef9c3 !important;
+            font-weight: 500;
         }
+        
+        .coxa-sobrecoxa td {
+            background-color: #fef9c3 !important;
+            color: #854d0e;
+        }
+        
         .badge-pares {
-            background-color: #17a2b8;
+            background: #3b82f6;
             color: white;
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            border-radius: 12px;
-            margin-left: 5px;
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            font-weight: 500;
         }
-        .valor-normal {
-            color: #28a745;
-            font-weight: bold;
+        
+        .valor-normal { 
+            color: #16a34a; 
+            font-weight: 600;
         }
+        
         .valor-promocao {
-            color: #dc3545;
-            font-weight: bold;
-            background-color: #f8d7da;
-            padding: 2px 5px;
-            border-radius: 4px;
+            color: #dc2626;
+            font-weight: 600;
+            background: #fee2e2;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
         }
-        .produto-especial {
-            background-color: #d1ecf1;
+        
+        /* Formulários */
+        .form-control, .form-select {
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            color: #0f172a;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+        
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+        
+        /* Alertas */
+        .alert-info {
+            background: #e0f2fe;
+            border-color: #bae6fd;
+            color: #0369a1;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .alert-warning {
+            background: #fef3c7;
+            border-color: #fde68a;
+            color: #b45309;
+            border-radius: 12px;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #b91c1c;
+            border-radius: 12px;
+        }
+        
+        /* Console de logs */
+        .console-log {
+            background: #0f172a;
+            color: #a5f3fc;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            padding: 15px;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+        
+        .erro-api {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 12px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+        
+        /* Botões */
+        .btn {
+            border-radius: 10px;
+            font-weight: 500;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #64748b;
+            border-color: #64748b;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+            border-color: #475569;
+        }
+        
+        .btn-success {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+        
+        .btn-success:hover {
+            background: #16a34a;
+            border-color: #16a34a;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+        
+        .btn-info {
+            background: #06b6d4;
+            border-color: #06b6d4;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #0891b2;
+            border-color: #0891b2;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+            border-color: #d97706;
+        }
+        
+        .btn-outline-primary {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .btn-outline-primary:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        /* Botões pequenos na tabela */
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 8px;
+        }
+        
+        /* Abas */
+        .nav-tabs {
+            border-bottom: 2px solid #e2e8f0;
+            gap: 4px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #475569;
+            background: transparent;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 500;
+            border-radius: 12px 12px 0 0;
+            transition: all 0.2s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: #ffffff;
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+            font-weight: 600;
+        }
+        
+        /* Rodapé da tabela */
+        .table-primary {
+            background: #dbeafe !important;
+        }
+        
+        .table-primary td {
+            background: #dbeafe !important;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        
+        .table-secondary {
+            background: #f1f5f9 !important;
+        }
+        
+        .table-secondary td {
+            background: #f1f5f9 !important;
+            color: #334155;
+            font-size: 0.75rem;
+        }
+        
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+            
+            .table th, .table td {
+                padding: 8px 4px;
+                font-size: 0.75rem;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -46,49 +409,36 @@
 
     <!-- Botões de log -->
     <div class="mb-2">
-        <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLogs()">
-            🖥️ Mostrar Logs de Depuração
-        </button>
-        <button class="btn btn-sm btn-warning" type="button" onclick="limparLogs()">
-            🧹 Limpar Logs
-        </button>
+        <button class="btn btn-sm btn-secondary" onclick="toggleLogs()">🖥️ Mostrar Logs</button>
+        <button class="btn btn-sm btn-warning" onclick="limparLogs()">🧹 Limpar Logs</button>
     </div>
 
-    <!-- Console de logs (inicialmente oculto) -->
-    <div id="consoleLogs" style="display: none; background-color: #1e1e1e; color: #00ff00; font-family: monospace; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; margin-bottom: 15px; font-size: 12px;">
+    <div id="consoleLogs" class="console-log" style="display: none;">
         <div id="logMessages"></div>
     </div>
 
     <!-- ABAS -->
-    <ul class="nav nav-tabs mb-3">
-        <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#abertos">
-                Pedidos Abertos
-            </button>
+    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="abertos-tab" data-bs-toggle="tab" data-bs-target="#abertos" type="button" role="tab">📋 Pedidos Abertos</button>
         </li>
-        <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#finalizados">
-                Pedidos Finalizados
-            </button>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">✅ Pedidos Finalizados</button>
         </li>
-        <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#produtosCliente">
-                Produtos do Cliente
-            </button>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="produtos-tab" data-bs-toggle="tab" data-bs-target="#produtosCliente" type="button" role="tab">📦 Produtos do Cliente</button>
         </li>
     </ul>
 
     <div class="tab-content">
 
-        <!-- ================= PEDIDOS ABERTOS ================= -->
-        <div class="tab-pane fade show active" id="abertos">
-            <div class="card shadow-sm">
+        <!-- ========== PEDIDOS ABERTOS ========== -->
+        <div class="tab-pane fade show active" id="abertos" role="tabpanel">
+            <div class="card">
                 <div class="card-body">
-
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <input type="text" id="filtroNomeAbertos" class="form-control"
-                                   placeholder="Nome do cliente">
+                            <input type="text" id="filtroNomeAbertos" class="form-control" placeholder="Nome do cliente">
                         </div>
                         <div class="col-md-2">
                             <button class="btn btn-primary w-100" onclick="filtrarPedidosAbertos()">🔍 Buscar</button>
@@ -97,37 +447,33 @@
                             <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm me-2" onclick="deletarTodosPedidosAbertos()">🗑 Excluir Todos</button>
-                            <button class="btn btn-info btn-sm" onclick="exportarPedidosAbertos()">📊 Exportar</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletarTodosPedidosAbertos()">🗑 Excluir Todos</button>
                         </div>
                     </div>
 
-                    <table class="table table-bordered table-hover table-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Valor</th>
-                                <th>Data</th>
-                                <th class="text-center">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaAbertos"></tbody>
-                    </table>
+                    <div id="erroAbertos" class="erro-api" style="display: none;"></div>
 
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data</th><th class="text-center">Ações</th>比
+                            </thead>
+                            <tbody id="tabelaAbertos">
+                                <tr><td colspan="5" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
+                            </tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= PEDIDOS FINALIZADOS ================= -->
-        <div class="tab-pane fade" id="finalizados">
-            <div class="card shadow-sm">
+        <!-- ========== PEDIDOS FINALIZADOS ========== -->
+        <div class="tab-pane fade" id="finalizados" role="tabpanel">
+            <div class="card">
                 <div class="card-body">
-
-                    <div class="row mb-3 align-items-end">
+                    <div class="row mb-3">
                         <div class="col-md-4">
-                            <input type="text" id="filtroNomeFinalizados" class="form-control"
-                                   placeholder="Nome do cliente">
+                            <input type="text" id="filtroNomeFinalizados" class="form-control" placeholder="Nome do cliente">
                         </div>
                         <div class="col-md-2">
                             <button class="btn btn-primary w-100" onclick="filtrarPedidosFinalizados()">🔍 Buscar</button>
@@ -136,115 +482,92 @@
                             <button class="btn btn-secondary w-100" onclick="carregarPedidosFinalizados()">🔄 Limpar</button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-outline-primary btn-sm me-2"
-                                    onclick="imprimirPedidosFinalizados()">🖨 Imprimir</button>
-                            <button class="btn btn-danger btn-sm"
-                                    onclick="deletarPedidosFinalizados()">🗑 Deletar Todos</button>
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="imprimirPedidosFinalizados()">🖨 Imprimir</button>
+                            <button class="btn btn-danger btn-sm" onclick="deletarPedidosFinalizados()">🗑 Deletar Todos</button>
                         </div>
                     </div>
 
-                    <table class="table table-bordered table-hover table-sm">
-                        <thead class="table-success">
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Valor</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaFinalizados"></tbody>
-                    </table>
+                    <div id="erroFinalizados" class="erro-api" style="display: none;"></div>
 
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-success">
+                                <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data Finalização</th>比
+                            </thead>
+                            <tbody id="tabelaFinalizados">
+                                <tr><td colspan="4" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
+                            </tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ================= PRODUTOS DO CLIENTE ================= -->
-        <div class="tab-pane fade" id="produtosCliente">
-            <div class="card shadow-sm">
+        <!-- ========== PRODUTOS DO CLIENTE ========== -->
+        <div class="tab-pane fade" id="produtosCliente" role="tabpanel">
+            <div class="card">
                 <div class="card-body">
-
-                    <div class="row mb-3 align-items-end">
+                    <div class="row mb-3">
                         <div class="col-md-4">
-                            <input type="text" id="filtroNomeProdutosCliente"
-                                   class="form-control"
-                                   placeholder="Nome do cliente">
+                            <input type="text" id="filtroNomeProdutosCliente" class="form-control" placeholder="Nome do cliente">
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-primary w-100"
-                                    onclick="filtrarProdutosCliente()">🔍 Buscar</button>
+                            <button class="btn btn-primary w-100" onclick="filtrarProdutosCliente()">🔍 Buscar</button>
                         </div>
                         <div class="col-md-2">
-                            <button class="btn btn-secondary w-100"
-                                    onclick="carregarProdutosCliente()">🔄 Limpar</button>
+                            <button class="btn btn-secondary w-100" onclick="carregarProdutosCliente()">🔄 Limpar</button>
                         </div>
                         <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm me-2"
-                                    onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
-                            <button class="btn btn-info btn-sm"
-                                    onclick="exportarProdutosCliente()">📊 Exportar</button>
+                            <button class="btn btn-danger btn-sm me-2" onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
+                            <button class="btn btn-info btn-sm" onclick="exportarProdutosCliente()">📊 Exportar</button>
                         </div>
                     </div>
 
-                    <div class="alert alert-info small mb-2">
-                        <strong>ℹ️ Informações:</strong> Todos os valores são calculados com base nos preços reais dos produtos cadastrados.
-                        Coxa/Sobrecoxa segue tabela promocional especial.
+                    <div id="erroProdutos" class="erro-api" style="display: none;"></div>
+
+                    <div class="alert alert-info small">
+                        <strong>ℹ️ Coxa/Sobrecoxa:</strong> Quantidade em PARES. Tabela: 1=R$10 | 2=R$20 | 3=R$25 | 4=R$35 | 5=R$40 | 6=R$50 | 7+=R$50 + R$10/par
                     </div>
 
-                    <table class="table table-bordered table-hover table-sm">
-                        <thead class="table-info">
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Produto</th>
-                                <th>Quantidade</th>
-                                <th>Pares</th>
-                                <th>Preço Unit.</th>
-                                <th>Valor Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaProdutosCliente"></tbody>
-                    </table>
-
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-info">
+                                <tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Quantidade</th><th>Pares</th><th>Valor</th>比
+                            </thead>
+                            <tbody id="tabelaProdutosCliente">
+                                <tr><td colspan="6" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
+                            </tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-const API = "https://vendas-svoq.onrender.com/";
+const API = "http://127.0.0.1:5000";
 let logsVisiveis = false;
-let precosProdutos = {}; // Cache dos preços dos produtos
+let precosProdutos = {};
 
-// ===== FUNÇÕES DE LOG =====
+// ===== LOGS =====
 function addLog(mensagem, tipo = 'info') {
     const logDiv = document.getElementById('logMessages');
     const timestamp = new Date().toLocaleTimeString('pt-BR', { hour12: false });
-    let cor = '#00ff00';
-    if (tipo === 'error') cor = '#ff5555';
-    if (tipo === 'warning') cor = '#ffaa00';
-    if (tipo === 'debug') cor = '#8888ff';
-
+    let cor = '#22c55e';
+    if (tipo === 'error') cor = '#ef4444';
+    if (tipo === 'warning') cor = '#f59e0b';
     logDiv.innerHTML += `<div style="color: ${cor}">[${timestamp}] ${mensagem}</div>`;
-
-    // Rolar para o final
-    const consoleDiv = document.getElementById('consoleLogs');
-    consoleDiv.scrollTop = consoleDiv.scrollHeight;
-
-    // Também mostra no console do navegador
+    document.getElementById('consoleLogs').scrollTop = document.getElementById('consoleLogs').scrollHeight;
     console.log(`[${timestamp}] ${mensagem}`);
 }
 
 function toggleLogs() {
     logsVisiveis = !logsVisiveis;
     document.getElementById('consoleLogs').style.display = logsVisiveis ? 'block' : 'none';
-    if (logsVisiveis) {
-        addLog('🔍 Logs de depuração ativados', 'info');
-    }
 }
 
 function limparLogs() {
@@ -252,296 +575,200 @@ function limparLogs() {
     addLog('🧹 Logs limpos', 'info');
 }
 
-// ===== FUNÇÕES AUXILIARES =====
-function isCoxaSobrecoxa(produto) {
-    if (!produto) return false;
-    const nome = typeof produto === 'string' ? produto : produto.produto || produto.nome || '';
-    const resultado = nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
-    return resultado;
-}
-
-function calcularPrecoCoxaSobrecoxa(pares, precoUnitario = 10) {
-    addLog(`💰 calcularPrecoCoxaSobrecoxa(${pares} pares, preço unitário R$ ${precoUnitario})`, 'debug');
-
-    if (pares <= 0) {
-        return { preco: 0, promocao: false };
-    }
-
-    let preco;
-    let promocao = false;
-
-    // Tabela de preços especiais por quantidade de PARES
-    if (pares === 1) {
-        preco = 10.00;
-        promocao = true;
-        addLog(`   → 1 par: R$ 10,00 (promoção)`, 'info');
-    } else if (pares === 2) {
-        preco = 20.00;
-        promocao = true;
-        addLog(`   → 2 pares: R$ 20,00 (promoção)`, 'info');
-    } else if (pares === 3) {
-        preco = 25.00;
-        promocao = true;
-        addLog(`   → 3 pares: R$ 25,00 (promoção)`, 'info');
-    } else if (pares === 4) {
-        preco = 35.00;
-        promocao = true;
-        addLog(`   → 4 pares: R$ 35,00 (promoção)`, 'info');
-    } else if (pares === 5) {
-        preco = 40.00;
-        promocao = true;
-        addLog(`   → 5 pares: R$ 40,00 (promoção)`, 'info');
-    } else if (pares === 6) {
-        preco = 50.00;
-        promocao = true;
-        addLog(`   → 6 pares: R$ 50,00 (promoção)`, 'info');
-    } else {
-        // Acima de 6 pares, preço normal
-        preco = precoUnitario * pares;
-        promocao = false;
-        addLog(`   → Acima de 6 pares (${pares}): R$ ${precoUnitario} × ${pares} = R$ ${preco.toFixed(2)} (preço normal)`, 'info');
-    }
-
-    return { preco, promocao };
-}
-
-// ===== FUNÇÃO PARA CARREGAR PREÇOS DOS PRODUTOS =====
-async function carregarPrecosProdutos() {
-    addLog('📋 Carregando preços dos produtos...', 'info');
-    try {
-        const res = await fetch(`${API}/produto_dia`);
-        if (!res.ok) throw new Error('Erro ao carregar produtos');
-        const produtos = await res.json();
-
-        // Cria mapa de preços por nome (case insensitive)
-        produtos.forEach(p => {
-            precosProdutos[p.nome.toLowerCase()] = p.preco;
-            addLog(`   ${p.nome}: R$ ${p.preco.toFixed(2)}`, 'debug');
-        });
-
-        addLog(`✅ Preços de ${produtos.length} produtos carregados`, 'info');
-        return true;
-    } catch (error) {
-        addLog(`❌ Erro ao carregar preços: ${error.message}`, 'error');
-        return false;
-    }
-}
-
-/* ===== FUNÇÃO GLOBAL PARA DATA BR ===== */
+// ===== UTILITÁRIOS =====
 function formatarDataBR(data) {
     if (!data) return "";
-    try {
-        const d = new Date(data);
-        if (!isNaN(d.getTime())) {
-            return d.toLocaleDateString("pt-BR");
-        }
-    } catch (e) {
-        console.error("Erro ao formatar data:", e);
-    }
-
-    // Se for string no formato YYYY-MM-DD
+    
     if (typeof data === 'string' && data.includes('-')) {
-        const partes = data.split('-');
+        const partes = data.split('T')[0].split('-');
         if (partes.length === 3) {
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
     }
-
+    
+    try {
+        const d = new Date(data);
+        if (!isNaN(d.getTime())) {
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const ano = d.getFullYear();
+            return `${dia}/${mes}/${ano}`;
+        }
+    } catch (e) {}
+    
     return data;
 }
 
-/* ================= PEDIDOS ABERTOS ================= */
+function isCoxaSobrecoxa(produto) {
+    if (!produto) return false;
+    const nome = typeof produto === 'string' ? produto : produto.produto || '';
+    return nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
+}
+
+function calcularPrecoCoxaSobrecoxa(pares) {
+    if (pares <= 0) return 0;
+    if (pares === 1) return 10;
+    if (pares === 2) return 20;
+    if (pares === 3) return 25;
+    if (pares === 4) return 35;
+    if (pares === 5) return 40;
+    if (pares === 6) return 50;
+    return 50 + ((pares - 6) * 10);
+}
+
+// ===== FUNÇÃO GENÉRICA PARA FAZER FETCH =====
+async function fetchComTratamento(url, errorElementId) {
+    try {
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+            let errorMsg = `HTTP ${res.status}`;
+            try {
+                const errorData = await res.json();
+                errorMsg = errorData.erro || JSON.stringify(errorData);
+            } catch {
+                const errorText = await res.text();
+                errorMsg = errorText.substring(0, 200);
+            }
+            throw new Error(errorMsg);
+        }
+        
+        const data = await res.json();
+        
+        if (errorElementId) {
+            document.getElementById(errorElementId).style.display = 'none';
+        }
+        
+        return data;
+    } catch (error) {
+        addLog(`❌ Erro na requisição ${url}: ${error.message}`, 'error');
+        
+        if (errorElementId) {
+            const erroDiv = document.getElementById(errorElementId);
+            erroDiv.style.display = 'block';
+            erroDiv.innerHTML = `❌ Erro ao carregar dados: ${error.message}`;
+        }
+        
+        return [];
+    }
+}
+
+// ===== CARREGAR PREÇOS =====
+async function carregarPrecosProdutos() {
+    try {
+        const res = await fetch(`${API}/produto_dia`);
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+        const produtos = await res.json();
+        if (Array.isArray(produtos)) {
+            produtos.forEach(p => precosProdutos[p.nome.toLowerCase()] = p.preco);
+            addLog(`✅ Preços carregados: ${produtos.length} produtos`);
+        }
+    } catch (error) {
+        addLog(`⚠️ Não foi possível carregar preços: ${error.message}`, 'warning');
+    }
+}
+
+// ===== PEDIDOS ABERTOS =====
 async function carregarPedidosAbertos() {
     addLog('📋 Carregando pedidos abertos...', 'info');
-    try {
-        const res = await fetch(`${API}/pedidos`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-        addLog(`✅ ${dados.length} pedidos abertos carregados`, 'info');
-        renderPedidosAbertos(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao carregar pedidos abertos: ${error.message}`, 'error');
-        alert('Erro ao carregar pedidos abertos');
-    }
+    const dados = await fetchComTratamento(`${API}/pedidos`, 'erroAbertos');
+    renderPedidosAbertos(dados);
 }
 
 async function filtrarPedidosAbertos() {
     const nome = document.getElementById('filtroNomeAbertos').value.trim();
     if (!nome) return alert("Digite o nome");
-    addLog(`🔍 Filtrando pedidos abertos por nome: "${nome}"`, 'info');
-    try {
-        const res = await fetch(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-        addLog(`✅ ${dados.length} pedidos encontrados`, 'info');
-        renderPedidosAbertos(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
-    }
+    
+    addLog(`🔍 Filtrando pedidos abertos por: "${nome}"`, 'info');
+    const dados = await fetchComTratamento(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`, 'erroAbertos');
+    renderPedidosAbertos(dados);
 }
 
 function renderPedidosAbertos(dados) {
     const tabela = document.getElementById('tabelaAbertos');
-    tabela.innerHTML = "";
-
-    if (dados.length === 0) {
-        tabela.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhum pedido aberto</td></tr>`;
+    
+    if (!dados || dados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum pedido aberto</td></tr>';
         return;
     }
 
+    tabela.innerHTML = '';
     dados.forEach(p => {
         const valorFormatado = Number(p.valor_total).toFixed(2);
-
+        const dataFormatada = formatarDataBR(p.data_pedido);
+        
         tabela.innerHTML += `
         <tr>
-            <td>${p.id}</td>
+            <td class="fw-bold">${p.id}</td>
             <td>${p.nome_cliente}</td>
-            <td>R$ ${valorFormatado}</td>
-            <td>${formatarDataBR(p.data_pedido)}</td>
+            <td class="text-end">R$ ${valorFormatado}</td>
+            <td class="text-center">${dataFormatada}</td>
             <td class="text-center">
-                <button class="btn btn-success btn-sm me-1"
-                        onclick="finalizarPedido(${p.id})">✔ Finalizar</button>
-                <button class="btn btn-danger btn-sm"
-                        onclick="excluirPedido(${p.id})">🗑 Excluir</button>
+                <button class="btn btn-success btn-sm me-1" onclick="finalizarPedido(${p.id})" title="Finalizar pedido">✔ Finalizar</button>
+                <button class="btn btn-danger btn-sm" onclick="excluirPedido(${p.id})" title="Excluir pedido">🗑 Excluir</button>
             </td>
         </tr>`;
     });
 }
 
 async function deletarTodosPedidosAbertos() {
-    if (!confirm("Tem certeza que deseja excluir TODOS os pedidos abertos?")) return;
-    addLog('🗑️ Deletando todos os pedidos abertos...', 'warning');
-
+    if (!confirm("Excluir TODOS os pedidos abertos?")) return;
     try {
-        const res = await fetch(`${API}/pedidos`);
-        const pedidos = await res.json();
-
-        let deletados = 0;
-        for (const pedido of pedidos) {
-            await fetch(`${API}/pedido/${pedido.id}`, { method: "DELETE" });
-            deletados++;
+        const dados = await fetchComTratamento(`${API}/pedidos`, 'erroAbertos');
+        if (dados && Array.isArray(dados)) {
+            for (const p of dados) {
+                await fetch(`${API}/pedido/${p.id}`, { method: "DELETE" });
+            }
+            addLog(`✅ ${dados.length} pedidos excluídos`);
+            carregarPedidosAbertos();
         }
-
-        addLog(`✅ ${deletados} pedidos abertos excluídos`, 'info');
-        carregarPedidosAbertos();
     } catch (error) {
-        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+        addLog(`❌ Erro: ${error.message}`, 'error');
     }
 }
 
-async function finalizarPedido(id) {
-    if (!confirm("Finalizar pedido?")) return;
-
-    const dataAtual = new Date();
-    const dia = String(dataAtual.getDate()).padStart(2, '0');
-    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-    const ano = dataAtual.getFullYear();
-    const dataFormatada = `${ano}-${mes}-${dia}`;
-
-    addLog(`📦 Finalizando pedido #${id} em ${dataFormatada}`, 'info');
-
-    try {
-        const response = await fetch(`${API}/pedido/${id}/finalizar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                data_finalizacao: dataFormatada
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.erro || "Erro ao finalizar");
-        }
-
-        addLog(`✅ Pedido #${id} finalizado com sucesso`, 'info');
-
-        carregarPedidosAbertos();
-        carregarPedidosFinalizados();
-    } catch (error) {
-        addLog(`❌ Erro ao finalizar pedido: ${error.message}`, 'error');
-        alert("Erro ao finalizar pedido: " + error.message);
-    }
-}
-
-async function excluirPedido(id) {
-    if (!confirm("Excluir pedido?")) return;
-    addLog(`🗑️ Excluindo pedido #${id}`, 'warning');
-    try {
-        const response = await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
-        if (!response.ok) throw new Error("Erro ao excluir");
-        addLog(`✅ Pedido #${id} excluído com sucesso`, 'info');
-        carregarPedidosAbertos();
-    } catch (error) {
-        addLog(`❌ Erro ao excluir pedido: ${error.message}`, 'error');
-    }
-}
-
-function exportarPedidosAbertos() {
-    addLog('📊 Exportando pedidos abertos...', 'info');
-    const tabela = document.querySelector('#abertos table').outerHTML;
-    const janela = window.open('', '', 'width=800,height=600');
-    janela.document.write(`
-        <html>
-        <head><title>Pedidos Abertos</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        </head>
-        <body><div class="container mt-3">${tabela}</div></body>
-        </html>
-    `);
-}
-
-/* ================= PEDIDOS FINALIZADOS ================= */
+// ===== PEDIDOS FINALIZADOS =====
 async function carregarPedidosFinalizados() {
     addLog('📋 Carregando pedidos finalizados...', 'info');
-    try {
-        const res = await fetch(`${API}/pedidos_finalizados`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-        addLog(`✅ ${dados.length} pedidos finalizados carregados`, 'info');
-        renderPedidosFinalizados(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao carregar pedidos finalizados: ${error.message}`, 'error');
-    }
+    const dados = await fetchComTratamento(`${API}/pedidos_finalizados`, 'erroFinalizados');
+    renderPedidosFinalizados(dados);
 }
 
 async function filtrarPedidosFinalizados() {
     const nome = document.getElementById('filtroNomeFinalizados').value.trim();
     if (!nome) return alert("Digite o nome");
-    addLog(`🔍 Filtrando pedidos finalizados por nome: "${nome}"`, 'info');
-    try {
-        const res = await fetch(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-        renderPedidosFinalizados(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
-    }
+    
+    addLog(`🔍 Filtrando pedidos finalizados por: "${nome}"`, 'info');
+    const dados = await fetchComTratamento(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`, 'erroFinalizados');
+    renderPedidosFinalizados(dados);
 }
 
 function renderPedidosFinalizados(dados) {
     const tabela = document.getElementById('tabelaFinalizados');
-    tabela.innerHTML = "";
-
-    if (dados.length === 0) {
-        tabela.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Nenhum pedido finalizado</td></tr>`;
+    
+    if (!dados || dados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum pedido finalizado</td></tr>';
         return;
     }
 
+    tabela.innerHTML = '';
     dados.forEach(p => {
-        const dataFinalizacao = p.data_finalizacao || p.data_pedido;
+        const valorFormatado = Number(p.valor_total).toFixed(2);
+        const dataFinalizacao = formatarDataBR(p.data_finalizacao);
+        
         tabela.innerHTML += `
         <tr>
-            <td>${p.id}</td>
+            <td class="fw-bold">${p.id}</td>
             <td>${p.nome_cliente}</td>
-            <td>R$ ${Number(p.valor_total).toFixed(2)}</td>
-            <td>${formatarDataBR(dataFinalizacao)}</td>
+            <td class="text-end">R$ ${valorFormatado}</td>
+            <td class="text-center">${dataFinalizacao}</td>
         </tr>`;
     });
 }
 
 function imprimirPedidosFinalizados() {
-    addLog('🖨️ Imprimindo pedidos finalizados...', 'info');
     const tabela = document.querySelector("#finalizados table").outerHTML;
     const janela = window.open("", "", "width=900,height=700");
     janela.document.write(`
@@ -551,11 +778,11 @@ function imprimirPedidosFinalizados() {
             <meta charset="UTF-8">
             <title>Pedidos Finalizados</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h2 { text-align: center; margin-bottom: 20px; }
+                body { font-family: Arial, sans-serif; padding: 20px; background: white; }
+                h2 { text-align: center; margin-bottom: 20px; color: #0f172a; }
                 table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-                th { background-color: #e9ecef; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                th { background-color: #f1f5f9; color: #0f172a; }
             </style>
         </head>
         <body>
@@ -566,213 +793,174 @@ function imprimirPedidosFinalizados() {
     `);
     janela.document.close();
     janela.print();
-    janela.close();
 }
 
 async function deletarPedidosFinalizados() {
-    if (!confirm("Tem certeza que deseja excluir TODOS os pedidos finalizados?")) return;
-    addLog('🗑️ Deletando todos os pedidos finalizados...', 'warning');
+    if (!confirm("Excluir TODOS os pedidos finalizados?")) return;
     try {
-        const response = await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
-        if (!response.ok) throw new Error("Erro ao deletar");
-        addLog('✅ Todos pedidos finalizados foram excluídos', 'info');
-        carregarPedidosFinalizados();
-        alert("Todos os pedidos finalizados foram excluídos!");
+        const res = await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
+        if (res.ok) {
+            addLog(`✅ Pedidos finalizados excluídos`);
+            carregarPedidosFinalizados();
+        } else {
+            const error = await res.json();
+            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
+        }
     } catch (error) {
-        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+        addLog(`❌ Erro: ${error.message}`, 'error');
     }
 }
 
-/* ================= PRODUTOS CLIENTE ================= */
+// ===== PRODUTOS CLIENTE =====
 async function carregarProdutosCliente() {
-    addLog('📋 Carregando produtos do cliente...', 'info');
-    try {
-        // Carrega preços primeiro se necessário
-        if (Object.keys(precosProdutos).length === 0) {
-            await carregarPrecosProdutos();
-        }
-
-        const res = await fetch(`${API}/produtos_cliente`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-
-        addLog(`✅ ${dados.length} registros carregados`, 'info');
-        renderProdutosCliente(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
-        alert("Erro ao carregar produtos do cliente");
-    }
+    await carregarPrecosProdutos();
+    const dados = await fetchComTratamento(`${API}/produtos_cliente`, 'erroProdutos');
+    renderProdutosCliente(dados);
 }
 
 async function filtrarProdutosCliente() {
     const nome = document.getElementById('filtroNomeProdutosCliente').value.trim();
     if (!nome) return alert("Digite o nome");
-    addLog(`🔍 Filtrando produtos por cliente: "${nome}"`, 'info');
-    try {
-        // Carrega preços primeiro se necessário
-        if (Object.keys(precosProdutos).length === 0) {
-            await carregarPrecosProdutos();
-        }
-
-        const res = await fetch(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`);
-        if (!res.ok) throw new Error('Erro na requisição');
-        const dados = await res.json();
-
-        renderProdutosCliente(dados);
-    } catch (error) {
-        addLog(`❌ Erro ao filtrar: ${error.message}`, 'error');
-    }
+    
+    await carregarPrecosProdutos();
+    const dados = await fetchComTratamento(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`, 'erroProdutos');
+    renderProdutosCliente(dados);
 }
 
 function renderProdutosCliente(dados) {
     const tabela = document.getElementById('tabelaProdutosCliente');
-    tabela.innerHTML = "";
-
-    if (dados.length === 0) {
-        tabela.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Nenhum produto encontrado</td></tr>`;
+    
+    if (!dados || dados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum produto encontrado</td></tr>';
         return;
     }
 
+    tabela.innerHTML = '';
+    let totalGeral = 0;
+    
     dados.forEach(item => {
         const quantidade = Number(item.qtd);
-        const ehCoxaSobrecoxa = isCoxaSobrecoxa(item.produto);
+        const ehCoxa = isCoxaSobrecoxa(item.produto);
+        const precoUnit = precosProdutos[item.produto.toLowerCase()] || 0;
+        const valor = ehCoxa ? calcularPrecoCoxaSobrecoxa(quantidade) : quantidade * precoUnit;
+        totalGeral += valor;
 
-        // Busca o preço do produto no cache
-        const nomeLower = item.produto.toLowerCase();
-        const precoUnitario = precosProdutos[nomeLower] || 0;
-
-        let classeLinha = '';
-        let quantidadeDisplay = '';
-        let paresDisplay = '';
-        let precoUnitDisplay = '';
-        let valorTotalDisplay = '';
-        let valorCalculado = 0;
-
-        if (ehCoxaSobrecoxa) {
-            classeLinha = 'coxa-sobrecoxa';
-
-            // Para Coxa/Sobrecoxa, a quantidade no banco está EM PARES
-            const pares = quantidade;
-            const pecas = pares * 2;
-
-            // Aplica a tabela de preços especiais
-            const resultado = calcularPrecoCoxaSobrecoxa(pares, precoUnitario);
-            valorCalculado = resultado.preco;
-
-            quantidadeDisplay = `${pecas} peças (${pares} par${pares !== 1 ? 'es' : ''})`;
-            paresDisplay = `<span class="badge-pares">${pares} par${pares !== 1 ? 'es' : ''}</span>`;
-            precoUnitDisplay = `R$ ${precoUnitario.toFixed(2)}`;
-
-            if (resultado.promocao) {
-                valorTotalDisplay = `<span class="valor-promocao">R$ ${valorCalculado.toFixed(2)} (promoção)</span>`;
-            } else {
-                valorTotalDisplay = `<span class="valor-normal">R$ ${valorCalculado.toFixed(2)}</span>`;
-            }
-
-            addLog(`   Coxa/Sobrecoxa: ${pecas} peças = ${pares} pares - R$ ${valorCalculado.toFixed(2)} (preço unit: R$ ${precoUnitario})`, 'debug');
-        } else {
-            // Para outros produtos, calcula com o preço real
-            valorCalculado = quantidade * precoUnitario;
-            quantidadeDisplay = quantidade.toFixed(3);
-            precoUnitDisplay = `R$ ${precoUnitario.toFixed(2)}`;
-            valorTotalDisplay = `<span class="valor-normal">R$ ${valorCalculado.toFixed(2)}</span>`;
-
-            addLog(`   ${item.produto}: ${quantidade} x R$ ${precoUnitario.toFixed(2)} = R$ ${valorCalculado.toFixed(2)}`, 'debug');
-        }
-
-        // Se não encontrou preço, mostra aviso
-        if (precoUnitario === 0) {
-            precoUnitDisplay = '<span class="text-danger">Preço não encontrado</span>';
-            valorTotalDisplay = '<span class="text-danger">? </span>';
-        }
+        const classe = ehCoxa ? 'coxa-sobrecoxa' : '';
+        const paresDisplay = ehCoxa ? `<span class="badge-pares">${quantidade} par(es)</span>` : '-';
+        const valorDisplay = ehCoxa ? 
+            `<span class="valor-promocao">R$ ${valor.toFixed(2)}</span>` : 
+            `<span class="valor-normal">R$ ${valor.toFixed(2)}</span>`;
 
         tabela.innerHTML += `
-        <tr class="${classeLinha}">
+        <tr class="${classe}">
             <td>${item.id}</td>
             <td><strong>${item.cliente}</strong></td>
-            <td>${item.produto} ${ehCoxaSobrecoxa ? paresDisplay : ''}</td>
-            <td>${quantidadeDisplay}</td>
-            <td>${ehCoxaSobrecoxa ? (quantidade * 2).toFixed(2) + ' peças' : '-'}</td>
-            <td>${precoUnitDisplay}</td>
-            <td>${valorTotalDisplay}</td>
+            <td>${item.produto}</td>
+            <td>${ehCoxa ? quantidade + ' par(es)' : quantidade.toFixed(3)}</td>
+            <td>${paresDisplay}</td>
+            <td>${valorDisplay}</td>
         </tr>`;
     });
 
-    // Calcular totais
-    let totalGeral = 0;
-    dados.forEach(item => {
-        const quantidade = Number(item.qtd);
-        const ehCoxaSobrecoxa = isCoxaSobrecoxa(item.produto);
-        const nomeLower = item.produto.toLowerCase();
-        const precoUnitario = precosProdutos[nomeLower] || 0;
-
-        if (ehCoxaSobrecoxa) {
-            const resultado = calcularPrecoCoxaSobrecoxa(quantidade, precoUnitario);
-            totalGeral += resultado.preco;
-        } else {
-            totalGeral += quantidade * precoUnitario;
-        }
-    });
-
-    // Adicionar linha de total
-    tabela.innerHTML += `
-    <tr class="table-primary">
-        <td colspan="6" class="text-end"><strong>TOTAL GERAL:</strong></td>
-        <td><strong>R$ ${totalGeral.toFixed(2)}</strong></td>
-    </tr>`;
-
-    // Adicionar linha de rodapé com explicação
-    tabela.innerHTML += `
-    <tr class="table-secondary">
-        <td colspan="7" class="text-muted small">
-            <strong>📌 Valores calculados com preços REAIS do banco de dados:</strong><br>
-            • Coxa/Sobrecoxa: quantidade em PARES com tabela promocional especial<br>
-            • Demais produtos: quantidade × preço cadastrado no sistema<br>
-            • Tabela Coxa/Sobrecoxa: 1par=R$10 | 2p=R$20 | 3p=R$25 | 4p=R$35 | 5p=R$40 | 6p=R$50 | Acima=R$10/par
-        </td>
-    </tr>`;
+    tabela.innerHTML += `<tr class="table-primary"><td colspan="5" class="text-end"><strong>TOTAL GERAL:</strong></td><td><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
 }
 
 async function deletarProdutosCliente() {
-    if (!confirm("Tem certeza que deseja excluir TODOS os produtos?")) return;
-    addLog('🗑️ Deletando todos os produtos do cliente...', 'warning');
+    if (!confirm("Excluir TODOS os produtos?")) return;
     try {
-        const response = await fetch(`${API}/produto/deletar`, { method: "DELETE" });
-        if (!response.ok) throw new Error("Erro ao deletar");
-        addLog('✅ Todos produtos foram excluídos', 'info');
-        carregarProdutosCliente();
-        alert("Todos os produtos foram excluídos!");
+        const res = await fetch(`${API}/produto/deletar`, { method: "DELETE" });
+        if (res.ok) {
+            addLog(`✅ Todos produtos excluídos`);
+            carregarProdutosCliente();
+        } else {
+            const error = await res.json();
+            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
+        }
     } catch (error) {
-        addLog(`❌ Erro ao deletar: ${error.message}`, 'error');
+        addLog(`❌ Erro: ${error.message}`, 'error');
     }
 }
 
 function exportarProdutosCliente() {
-    addLog('📊 Exportando produtos do cliente...', 'info');
     const tabela = document.querySelector('#produtosCliente table').outerHTML;
     const janela = window.open('', '', 'width=800,height=600');
     janela.document.write(`
         <html>
-        <head><title>Produtos do Cliente</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-        <style>
-            .coxa-sobrecoxa { background-color: #fff3cd; }
-            .badge-pares { background-color: #17a2b8; color: white; padding: 2px 5px; border-radius: 10px; }
-        </style>
+        <head>
+            <title>Produtos do Cliente</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { background: white; }
+                .coxa-sobrecoxa { background-color: #fef9c3 !important; }
+                .badge-pares { background-color: #3b82f6; color: white; padding: 2px 5px; border-radius: 10px; }
+                .table th { background-color: #f1f5f9; }
+            </style>
         </head>
-        <body><div class="container mt-3">${tabela}</div></body>
+        <body>
+            <div class="container mt-3">
+                ${tabela}
+            </div>
+        </body>
         </html>
     `);
 }
 
+// ===== AÇÕES =====
+async function finalizarPedido(id) {
+    if (!confirm("Finalizar pedido?")) return;
+    
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const dataFormatada = `${ano}-${mes}-${dia}`;
+    
+    addLog(`📅 Finalizando pedido ${id} com data: ${dataFormatada}`, 'info');
+    
+    try {
+        const res = await fetch(`${API}/pedido/${id}/finalizar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data_finalizacao: dataFormatada })
+        });
+        
+        if (res.ok) {
+            addLog(`✅ Pedido ${id} finalizado com sucesso`);
+            carregarPedidosAbertos();
+            carregarPedidosFinalizados();
+        } else {
+            const error = await res.json();
+            addLog(`❌ Erro ao finalizar: ${error.erro}`, 'error');
+            alert(`Erro: ${error.erro}`);
+        }
+    } catch (error) {
+        addLog(`❌ Erro: ${error.message}`, 'error');
+        alert(`Erro: ${error.message}`);
+    }
+}
+
+async function excluirPedido(id) {
+    if (!confirm("Excluir pedido?")) return;
+    try {
+        const res = await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
+        if (res.ok) {
+            addLog(`✅ Pedido ${id} excluído`);
+            carregarPedidosAbertos();
+        } else {
+            const error = await res.json();
+            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
+            alert(`Erro: ${error.erro}`);
+        }
+    } catch (error) {
+        addLog(`❌ Erro: ${error.message}`, 'error');
+        alert(`Erro: ${error.message}`);
+    }
+}
+
 // ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', async function() {
-    addLog('🚀 Painel Administrativo iniciado', 'info');
-
-    // Carrega preços primeiro
-    await carregarPrecosProdutos();
-
-    // Depois carrega os dados
+document.addEventListener('DOMContentLoaded', function() {
+    addLog('🚀 Painel Administrativo iniciado');
+    
     carregarPedidosAbertos();
     carregarPedidosFinalizados();
     carregarProdutosCliente();
