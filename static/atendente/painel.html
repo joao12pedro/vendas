@@ -2,561 +2,105 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Administrativo</title>
+    <title>Home - Novo Pedido</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* ========== TEMA CLARO ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body { 
-            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
-            color: #1e293b;
-            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-        }
-
-        /* Container principal */
-        .container {
-            max-width: 1400px;
-            padding: 1.5rem;
-        }
-
-        /* Cards */
-        .card { 
-            border-radius: 20px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-body {
-            background: #ffffff;
-            padding: 1.5rem;
-        }
-
-        /* Títulos */
-        h2.fw-bold {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            border-left: 4px solid #3b82f6;
-            padding-left: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        h4, h5 {
-            color: #0f172a;
-            font-weight: 600;
-        }
-
-        /* Tabelas */
-        .table { 
-            color: #1e293b;
-            border-color: #e2e8f0;
-            font-size: 0.9rem;
-        }
-        
-        .table th { 
-            background: #f1f5f9;
-            color: #0f172a;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            border-color: #e2e8f0;
-            padding: 12px 8px;
-        }
-        
-        .table td { 
-            background-color: #ffffff;
-            border-color: #e2e8f0;
-            vertical-align: middle;
-            padding: 12px 8px;
-        }
-        
-        .table-hover tbody tr:hover td {
-            background-color: #f8fafc;
-            transition: background-color 0.2s;
-        }
-        
-        /* Cabeçalhos específicos por aba */
-        .table-dark th {
-            background: #1e293b !important;
-            color: #f1f5f9;
-            border-color: #334155;
-        }
-        
-        .table-success th {
-            background: #dcfce7 !important;
-            color: #166534;
-            border-color: #bbf7d0;
-        }
-        
-        .table-info th {
-            background: #dbeafe !important;
-            color: #1e40af;
-            border-color: #bfdbfe;
-        }
-        
-        /* Destaque para Coxa/Sobrecoxa */
-        .coxa-sobrecoxa {
-            background-color: #fef9c3 !important;
-            font-weight: 500;
-        }
-        
-        .coxa-sobrecoxa td {
-            background-color: #fef9c3 !important;
-            color: #854d0e;
-        }
-        
-        .badge-pares {
-            background: #3b82f6;
-            color: white;
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            border-radius: 20px;
-            margin-left: 8px;
-            font-weight: 500;
-        }
-        
-        .valor-normal { 
-            color: #16a34a; 
-            font-weight: 600;
-        }
-        
-        .valor-promocao {
-            color: #dc2626;
-            font-weight: 600;
-            background: #fee2e2;
-            padding: 4px 12px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-        
-        /* Formulários */
-        .form-control, .form-select {
-            background-color: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #1e293b;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            background-color: #ffffff;
-            border-color: #3b82f6;
-            color: #0f172a;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            outline: none;
-        }
-        
-        .form-control::placeholder {
-            color: #94a3b8;
-        }
-        
-        /* Alertas */
-        .alert-info {
-            background: #e0f2fe;
-            border-color: #bae6fd;
-            color: #0369a1;
-            border-radius: 12px;
-            font-size: 0.85rem;
-        }
-        
-        .alert-warning {
-            background: #fef3c7;
-            border-color: #fde68a;
-            color: #b45309;
-            border-radius: 12px;
-        }
-        
-        .alert-danger {
-            background: #fee2e2;
-            border-color: #fecaca;
-            color: #b91c1c;
-            border-radius: 12px;
-        }
-        
-        /* Console de logs */
-        .console-log {
-            background: #0f172a;
-            color: #a5f3fc;
-            font-family: 'Courier New', 'Fira Code', monospace;
-            padding: 15px;
-            border-radius: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #334155;
-        }
-        
-        .erro-api {
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #b91c1c;
-            padding: 12px;
-            border-radius: 12px;
-            margin: 10px 0;
-            font-size: 0.85rem;
-        }
-        
-        /* Botões */
-        .btn {
-            border-radius: 10px;
-            font-weight: 500;
-            padding: 8px 16px;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2563eb;
-            border-color: #2563eb;
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            background: #64748b;
-            border-color: #64748b;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #475569;
-            border-color: #475569;
-        }
-        
-        .btn-success {
-            background: #22c55e;
-            border-color: #22c55e;
-        }
-        
-        .btn-success:hover {
-            background: #16a34a;
-            border-color: #16a34a;
-        }
-        
-        .btn-danger {
-            background: #ef4444;
-            border-color: #ef4444;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-            border-color: #dc2626;
-        }
-        
-        .btn-info {
-            background: #06b6d4;
-            border-color: #06b6d4;
-            color: white;
-        }
-        
-        .btn-info:hover {
-            background: #0891b2;
-            border-color: #0891b2;
-        }
-        
-        .btn-warning {
-            background: #f59e0b;
-            border-color: #f59e0b;
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background: #d97706;
-            border-color: #d97706;
-        }
-        
-        .btn-outline-primary {
-            color: #3b82f6;
-            border-color: #3b82f6;
-        }
-        
-        .btn-outline-primary:hover {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        /* Botões pequenos na tabela */
-        .btn-sm {
-            padding: 4px 10px;
-            font-size: 0.75rem;
-            border-radius: 8px;
-        }
-        
-        /* Abas */
-        .nav-tabs {
-            border-bottom: 2px solid #e2e8f0;
-            gap: 4px;
-        }
-        
-        .nav-tabs .nav-link {
-            color: #475569;
-            background: transparent;
-            border: none;
-            padding: 12px 24px;
-            font-weight: 500;
-            border-radius: 12px 12px 0 0;
-            transition: all 0.2s;
-        }
-        
-        .nav-tabs .nav-link:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background: #ffffff;
-            color: #3b82f6;
-            border-bottom: 2px solid #3b82f6;
-            font-weight: 600;
-        }
-        
-        /* Rodapé da tabela */
-        .table-primary {
-            background: #dbeafe !important;
-        }
-        
-        .table-primary td {
-            background: #dbeafe !important;
-            color: #1e40af;
-            font-weight: 600;
-        }
-        
-        .table-secondary {
-            background: #f1f5f9 !important;
-        }
-        
-        .table-secondary td {
-            background: #f1f5f9 !important;
-            color: #334155;
-            font-size: 0.75rem;
-        }
-        
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-            
-            .nav-tabs .nav-link {
-                padding: 8px 16px;
-                font-size: 0.8rem;
-            }
-            
-            .table th, .table td {
-                padding: 8px 4px;
-                font-size: 0.75rem;
-            }
-            
-            .btn {
-                padding: 6px 12px;
-                font-size: 0.75rem;
-            }
-        }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%); color: #1e293b; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+        .container { max-width: 1400px; padding: 1.5rem; }
+        .card { border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: #fff; border: 1px solid #e2e8f0; }
+        .card-header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-radius: 20px 20px 0 0; }
+        .card-body { padding: 1.5rem; }
+        h2 { font-size: 1.5rem; margin: 0; }
+        h4 { color: #0f172a; font-weight: 600; margin-top: 1.5rem; margin-bottom: 1rem; }
+        .table { color: #1e293b; border-color: #e2e8f0; }
+        .table th { background: #f1f5f9; color: #0f172a; font-weight: 600; padding: 12px 8px; }
+        .table td { background: #fff; padding: 12px 8px; vertical-align: middle; }
+        .table-hover tbody tr:hover td { background-color: #f8fafc; }
+        .coxa-badge { background-color: #f59e0b; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; margin-left: 8px; }
+        .frango-badge { background-color: #10b981; color: #fff; font-size: 0.7rem; padding: 2px 8px; border-radius: 12px; margin-left: 8px; }
+        .console-log { background: #0f172a; color: #a5f3fc; font-family: monospace; padding: 15px; border-radius: 12px; max-height: 200px; overflow-y: auto; font-size: 12px; margin-bottom: 15px; }
+        .btn { border-radius: 10px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: #3b82f6; border-color: #3b82f6; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-outline-danger { border-color: #ef4444; color: #ef4444; }
+        .btn-outline-danger:hover { background: #ef4444; color: white; }
+        .btn-outline-success { border-color: #22c55e; color: #22c55e; }
+        .btn-outline-success:hover { background: #22c55e; color: white; }
+        .input-quantidade { width: 100px; text-align: center; margin: 0 5px; }
+        .valor-total { font-size: 1.5rem; font-weight: 700; color: #3b82f6; }
+        @media (max-width: 768px) { .input-quantidade { width: 70px; } .btn-sm { padding: 4px 8px; } }
     </style>
 </head>
 <body>
 
-<div class="container my-4">
-    <h2 class="fw-bold mb-4">📊 Painel Administrativo</h2>
-
-    <!-- Botões de log -->
-    <div class="mb-2">
-        <button class="btn btn-sm btn-secondary" onclick="toggleLogs()">🖥️ Mostrar Logs</button>
-        <button class="btn btn-sm btn-warning" onclick="limparLogs()">🧹 Limpar Logs</button>
-    </div>
-
-    <div id="consoleLogs" class="console-log" style="display: none;">
-        <div id="logMessages"></div>
-    </div>
-
-    <!-- ABAS -->
-    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="abertos-tab" data-bs-toggle="tab" data-bs-target="#abertos" type="button" role="tab">📋 Pedidos Abertos</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">✅ Pedidos Finalizados</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="produtos-tab" data-bs-toggle="tab" data-bs-target="#produtosCliente" type="button" role="tab">📦 Produtos do Cliente</button>
-        </li>
-    </ul>
-
-    <div class="tab-content">
-
-        <!-- ========== PEDIDOS ABERTOS ========== -->
-        <div class="tab-pane fade show active" id="abertos" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <input type="text" id="filtroNomeAbertos" class="form-control" placeholder="Nome do cliente">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" onclick="filtrarPedidosAbertos()">🔍 Buscar</button>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-secondary w-100" onclick="carregarPedidosAbertos()">🔄 Limpar</button>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm" onclick="deletarTodosPedidosAbertos()">🗑 Excluir Todos</button>
-                        </div>
-                    </div>
-
-                    <div id="erroAbertos" class="erro-api" style="display: none;"></div>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
-                                <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data</th><th class="text-center">Ações</th>比
-                            </thead>
-                            <tbody id="tabelaAbertos">
-                                <tr><td colspan="5" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
-                            </tbody>
-                         </table>
-                    </div>
-                </div>
-            </div>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0">🛒 Novo Pedido</h2>
         </div>
+        <div class="card-body">
 
-        <!-- ========== PEDIDOS FINALIZADOS ========== -->
-        <div class="tab-pane fade" id="finalizados" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <input type="text" id="filtroNomeFinalizados" class="form-control" placeholder="Nome do cliente">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" onclick="filtrarPedidosFinalizados()">🔍 Buscar</button>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-secondary w-100" onclick="carregarPedidosFinalizados()">🔄 Limpar</button>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-outline-primary btn-sm me-2" onclick="imprimirPedidosFinalizados()">🖨 Imprimir</button>
-                            <button class="btn btn-danger btn-sm" onclick="deletarPedidosFinalizados()">🗑 Deletar Todos</button>
-                        </div>
-                    </div>
+            <!-- Nome do cliente -->
+            <div class="mb-4">
+                <label class="form-label fw-bold">Nome do Cliente</label>
+                <input type="text" id="nomeCliente" class="form-control" placeholder="Digite o nome" style="max-width: 400px;">
+            </div>
 
-                    <div id="erroFinalizados" class="erro-api" style="display: none;"></div>
+            <!-- Botões de log -->
+            <div class="mb-2">
+                <button class="btn btn-sm btn-secondary" onclick="toggleLogs()">🖥️ Mostrar Logs</button>
+                <button class="btn btn-sm btn-warning" onclick="limparLogs()">🧹 Limpar Logs</button>
+            </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-success">
-                                <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data Finalização</th>比
-                            </thead>
-                            <tbody id="tabelaFinalizados">
-                                <tr><td colspan="4" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
-                            </tbody>
-                         </table>
-                    </div>
+            <div id="consoleLogs" class="console-log" style="display: none;">
+                <div id="logMessages"></div>
+            </div>
+
+            <!-- Produtos do dia -->
+            <h4>📦 Produtos do Dia</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr><th>Produto</th><th>Preço</th><th>Estoque</th><th class="text-center">Quantidade</th></tr>
+                    </thead>
+                    <tbody id="listaProdutos"></tbody>
+                </table>
+            </div>
+
+            <!-- Itens do pedido -->
+            <h4>🛍️ Itens do Pedido</h4>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead><tr><th>Produto</th><th>Quantidade</th><th>Preço</th></tr></thead>
+                    <tbody id="itensPedido"></tbody>
+                </table>
+            </div>
+
+            <div class="row mt-4 align-items-center">
+                <div class="col-md-8 text-end">
+                    <h3 class="valor-total">Total: R$ <span id="valorTotal">0.00</span></h3>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100" onclick="criarPedido()">✅ Criar Pedido</button>
                 </div>
             </div>
-        </div>
 
-        <!-- ========== PRODUTOS DO CLIENTE ========== -->
-        <div class="tab-pane fade" id="produtosCliente" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <input type="text" id="filtroNomeProdutosCliente" class="form-control" placeholder="Nome do cliente">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" onclick="filtrarProdutosCliente()">🔍 Buscar</button>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-secondary w-100" onclick="carregarProdutosCliente()">🔄 Limpar</button>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button class="btn btn-danger btn-sm me-2" onclick="deletarProdutosCliente()">🗑 Excluir Todos</button>
-                            <button class="btn btn-info btn-sm" onclick="exportarProdutosCliente()">📊 Exportar</button>
-                        </div>
-                    </div>
-
-                    <div id="erroProdutos" class="erro-api" style="display: none;"></div>
-
-                    <div class="alert alert-info small">
-                        <strong>ℹ️ Coxa/Sobrecoxa:</strong> Quantidade em PARES. Tabela: 1=R$10 | 2=R$20 | 3=R$25 | 4=R$35 | 5=R$40 | 6=R$50 | 7+=R$50 + R$10/par
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-info">
-                                <tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Quantidade</th><th>Pares</th><th>Valor</th>比
-                            </thead>
-                            <tbody id="tabelaProdutosCliente">
-                                <tr><td colspan="6" class="text-center text-muted">Carregando...<div class="spinner-border spinner-border-sm ms-2" role="status"></div>\(\)</td></tr>
-                            </tbody>
-                         </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-const API = "https://vendas-svoq.onrender.com";
+const BASE_URL = "https://vendas-svoq.onrender.com";
+let produtosDia = [];
+let produtosSelecionados = [];
 let logsVisiveis = false;
-let precosProdutos = {};
 
-// ===== LOGS =====
 function addLog(mensagem, tipo = 'info') {
     const logDiv = document.getElementById('logMessages');
-    const timestamp = new Date().toLocaleTimeString('pt-BR', { hour12: false });
+    const timestamp = new Date().toLocaleTimeString('pt-BR');
     let cor = '#22c55e';
     if (tipo === 'error') cor = '#ef4444';
     if (tipo === 'warning') cor = '#f59e0b';
@@ -565,46 +109,50 @@ function addLog(mensagem, tipo = 'info') {
     console.log(`[${timestamp}] ${mensagem}`);
 }
 
-function toggleLogs() {
-    logsVisiveis = !logsVisiveis;
-    document.getElementById('consoleLogs').style.display = logsVisiveis ? 'block' : 'none';
+function toggleLogs() { logsVisiveis = !logsVisiveis; document.getElementById('consoleLogs').style.display = logsVisiveis ? 'block' : 'none'; }
+function limparLogs() { document.getElementById('logMessages').innerHTML = ''; addLog('🧹 Logs limpos', 'info'); }
+
+// ===== FUNÇÕES DE CATEGORIZAÇÃO =====
+function isCoxaSobrecoxa(nome) {
+    return nome && nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
 }
 
-function limparLogs() {
-    document.getElementById('logMessages').innerHTML = '';
-    addLog('🧹 Logs limpos', 'info');
+function isFrangoRecheado(nome) {
+    return nome && nome.toLowerCase().includes('frango') && nome.toLowerCase().includes('recheado');
 }
 
-// ===== UTILITÁRIOS =====
-function formatarDataBR(data) {
-    if (!data) return "";
-    
-    if (typeof data === 'string' && data.includes('-')) {
-        const partes = data.split('T')[0].split('-');
-        if (partes.length === 3) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
+function isOutros(nome) {
+    return !isCoxaSobrecoxa(nome) && !isFrangoRecheado(nome);
+}
+
+// ===== INCREMENTOS =====
+function getIncremento(nome) {
+    if (isCoxaSobrecoxa(nome)) return 1;      // Coxa/Sobrecoxa: 1 em 1 (pares)
+    if (isFrangoRecheado(nome)) return 1;     // Frango Recheado: 1 em 1
+    return 0.5;                               // Demais produtos: 0.5 em 0.5
+}
+
+function arredondarQuantidade(valor, nome) {
+    if (isCoxaSobrecoxa(nome)) {
+        return Math.round(valor);  // Coxa/Sobrecoxa: números inteiros (pares)
     }
-    
-    try {
-        const d = new Date(data);
-        if (!isNaN(d.getTime())) {
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const ano = d.getFullYear();
-            return `${dia}/${mes}/${ano}`;
-        }
-    } catch (e) {}
-    
-    return data;
+    if (isFrangoRecheado(nome)) {
+        return Math.round(valor);  // Frango Recheado: números inteiros
+    }
+    return Math.round(valor * 2) / 2;  // Demais: múltiplos de 0.5
 }
 
-function isCoxaSobrecoxa(produto) {
-    if (!produto) return false;
-    const nome = typeof produto === 'string' ? produto : produto.produto || '';
-    return nome.toLowerCase().includes('coxa') && nome.toLowerCase().includes('sobrecoxa');
+function formatarQuantidade(valor, nome) {
+    if (isCoxaSobrecoxa(nome)) {
+        return valor.toFixed(0) + ' par(es)';
+    }
+    if (isFrangoRecheado(nome)) {
+        return valor.toFixed(0);
+    }
+    return valor.toFixed(2);
 }
 
+// ===== CÁLCULO DE PREÇO =====
 function calcularPrecoCoxaSobrecoxa(pares) {
     if (pares <= 0) return 0;
     if (pares === 1) return 10;
@@ -616,356 +164,219 @@ function calcularPrecoCoxaSobrecoxa(pares) {
     return 50 + ((pares - 6) * 10);
 }
 
-// ===== FUNÇÃO GENÉRICA PARA FAZER FETCH =====
-async function fetchComTratamento(url, errorElementId) {
-    try {
-        const res = await fetch(url);
-        
-        if (!res.ok) {
-            let errorMsg = `HTTP ${res.status}`;
-            try {
-                const errorData = await res.json();
-                errorMsg = errorData.erro || JSON.stringify(errorData);
-            } catch {
-                const errorText = await res.text();
-                errorMsg = errorText.substring(0, 200);
-            }
-            throw new Error(errorMsg);
-        }
-        
-        const data = await res.json();
-        
-        if (errorElementId) {
-            document.getElementById(errorElementId).style.display = 'none';
-        }
-        
-        return data;
-    } catch (error) {
-        addLog(`❌ Erro na requisição ${url}: ${error.message}`, 'error');
-        
-        if (errorElementId) {
-            const erroDiv = document.getElementById(errorElementId);
-            erroDiv.style.display = 'block';
-            erroDiv.innerHTML = `❌ Erro ao carregar dados: ${error.message}`;
-        }
-        
-        return [];
-    }
+function getQuantidadeReal(nome, quantidade) {
+    return quantidade; // A quantidade já está correta (pares para Coxa)
 }
 
-// ===== CARREGAR PREÇOS =====
-async function carregarPrecosProdutos() {
-    try {
-        const res = await fetch(`${API}/produto_dia`);
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-        const produtos = await res.json();
-        if (Array.isArray(produtos)) {
-            produtos.forEach(p => precosProdutos[p.nome.toLowerCase()] = p.preco);
-            addLog(`✅ Preços carregados: ${produtos.length} produtos`);
-        }
-    } catch (error) {
-        addLog(`⚠️ Não foi possível carregar preços: ${error.message}`, 'warning');
-    }
-}
-
-// ===== PEDIDOS ABERTOS =====
-async function carregarPedidosAbertos() {
-    addLog('📋 Carregando pedidos abertos...', 'info');
-    const dados = await fetchComTratamento(`${API}/pedidos`, 'erroAbertos');
-    renderPedidosAbertos(dados);
-}
-
-async function filtrarPedidosAbertos() {
-    const nome = document.getElementById('filtroNomeAbertos').value.trim();
-    if (!nome) return alert("Digite o nome");
+function calcularSubtotal(item) {
+    const produto = produtosDia.find(p => p.id === item.produto_id);
+    if (!produto) return 0;
     
-    addLog(`🔍 Filtrando pedidos abertos por: "${nome}"`, 'info');
-    const dados = await fetchComTratamento(`${API}/pedidos/filtrar?nome=${encodeURIComponent(nome)}`, 'erroAbertos');
-    renderPedidosAbertos(dados);
+    if (isCoxaSobrecoxa(item.nome)) {
+        return calcularPrecoCoxaSobrecoxa(item.quantidade);
+    }
+    return item.quantidade * produto.preco;
 }
 
-function renderPedidosAbertos(dados) {
-    const tabela = document.getElementById('tabelaAbertos');
-    
-    if (!dados || dados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhum pedido aberto</td></tr>';
-        return;
-    }
-
-    tabela.innerHTML = '';
-    dados.forEach(p => {
-        const valorFormatado = Number(p.valor_total).toFixed(2);
-        const dataFormatada = formatarDataBR(p.data_pedido);
-        
-        tabela.innerHTML += `
-        <tr>
-            <td class="fw-bold">${p.id}</td>
-            <td>${p.nome_cliente}</td>
-            <td class="text-end">R$ ${valorFormatado}</td>
-            <td class="text-center">${dataFormatada}</td>
-            <td class="text-center">
-                <button class="btn btn-success btn-sm me-1" onclick="finalizarPedido(${p.id})" title="Finalizar pedido">✔ Finalizar</button>
-                <button class="btn btn-danger btn-sm" onclick="excluirPedido(${p.id})" title="Excluir pedido">🗑 Excluir</button>
-            </td>
-        </tr>`;
+function calcularValorTotal() {
+    let total = 0;
+    produtosSelecionados.forEach(item => {
+        total += calcularSubtotal(item);
     });
+    return total;
 }
 
-async function deletarTodosPedidosAbertos() {
-    if (!confirm("Excluir TODOS os pedidos abertos?")) return;
-    try {
-        const dados = await fetchComTratamento(`${API}/pedidos`, 'erroAbertos');
-        if (dados && Array.isArray(dados)) {
-            for (const p of dados) {
-                await fetch(`${API}/pedido/${p.id}`, { method: "DELETE" });
-            }
-            addLog(`✅ ${dados.length} pedidos excluídos`);
-            carregarPedidosAbertos();
-        }
-    } catch (error) {
-        addLog(`❌ Erro: ${error.message}`, 'error');
-    }
+function atualizarValorTotal() {
+    const total = calcularValorTotal();
+    document.getElementById('valorTotal').innerText = total.toFixed(2);
 }
 
-// ===== PEDIDOS FINALIZADOS =====
-async function carregarPedidosFinalizados() {
-    addLog('📋 Carregando pedidos finalizados...', 'info');
-    const dados = await fetchComTratamento(`${API}/pedidos_finalizados`, 'erroFinalizados');
-    renderPedidosFinalizados(dados);
-}
+// ===== ATUALIZAR QUANTIDADE =====
+function atualizarQuantidadeInput(id, nome) {
+    const input = document.getElementById(`input-qtd-${id}`);
+    if (!input) return;
 
-async function filtrarPedidosFinalizados() {
-    const nome = document.getElementById('filtroNomeFinalizados').value.trim();
-    if (!nome) return alert("Digite o nome");
-    
-    addLog(`🔍 Filtrando pedidos finalizados por: "${nome}"`, 'info');
-    const dados = await fetchComTratamento(`${API}/pedidos_finalizados/filtrar?nome=${encodeURIComponent(nome)}`, 'erroFinalizados');
-    renderPedidosFinalizados(dados);
-}
+    let valor = parseFloat(input.value);
+    if (isNaN(valor) || valor < 0) valor = 0;
 
-function renderPedidosFinalizados(dados) {
-    const tabela = document.getElementById('tabelaFinalizados');
-    
-    if (!dados || dados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum pedido finalizado</td></tr>';
-        return;
+    const produto = produtosDia.find(p => p.id === id);
+    if (!produto) return;
+
+    valor = arredondarQuantidade(valor, nome);
+
+    if (valor > produto.qtd) {
+        valor = produto.qtd;
+        input.value = formatarQuantidade(valor, nome);
     }
 
-    tabela.innerHTML = '';
-    dados.forEach(p => {
-        const valorFormatado = Number(p.valor_total).toFixed(2);
-        const dataFinalizacao = formatarDataBR(p.data_finalizacao);
-        
-        tabela.innerHTML += `
-        <tr>
-            <td class="fw-bold">${p.id}</td>
-            <td>${p.nome_cliente}</td>
-            <td class="text-end">R$ ${valorFormatado}</td>
-            <td class="text-center">${dataFinalizacao}</td>
-        </tr>`;
-    });
-}
+    let item = produtosSelecionados.find(p => p.produto_id === id);
 
-function imprimirPedidosFinalizados() {
-    const tabela = document.querySelector("#finalizados table").outerHTML;
-    const janela = window.open("", "", "width=900,height=700");
-    janela.document.write(`
-        <!DOCTYPE html>
-        <html lang="pt-br">
-        <head>
-            <meta charset="UTF-8">
-            <title>Pedidos Finalizados</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; background: white; }
-                h2 { text-align: center; margin-bottom: 20px; color: #0f172a; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                th { background-color: #f1f5f9; color: #0f172a; }
-            </style>
-        </head>
-        <body>
-            <h2>Pedidos Finalizados</h2>
-            ${tabela}
-        </body>
-        </html>
-    `);
-    janela.document.close();
-    janela.print();
-}
-
-async function deletarPedidosFinalizados() {
-    if (!confirm("Excluir TODOS os pedidos finalizados?")) return;
-    try {
-        const res = await fetch(`${API}/pedido/deletar`, { method: "DELETE" });
-        if (res.ok) {
-            addLog(`✅ Pedidos finalizados excluídos`);
-            carregarPedidosFinalizados();
+    if (valor <= 0) {
+        produtosSelecionados = produtosSelecionados.filter(p => p.produto_id !== id);
+    } else {
+        if (!item) {
+            produtosSelecionados.push({ produto_id: id, nome, quantidade: valor });
         } else {
-            const error = await res.json();
-            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
+            item.quantidade = valor;
         }
+    }
+
+    renderizarItens();
+    carregarProdutosDia();
+    atualizarValorTotal();
+}
+
+function alterarQuantidade(id, nome, delta) {
+    const produto = produtosDia.find(p => p.id === id);
+    let item = produtosSelecionados.find(p => p.produto_id === id);
+
+    if (!item && delta > 0) {
+        let quantidadeInicial = Math.abs(delta);
+        quantidadeInicial = arredondarQuantidade(quantidadeInicial, nome);
+        produtosSelecionados.push({ produto_id: id, nome, quantidade: quantidadeInicial });
+    } else if (item) {
+        let novaQuantidade = item.quantidade + delta;
+        novaQuantidade = arredondarQuantidade(novaQuantidade, nome);
+
+        if (novaQuantidade > produto.qtd) {
+            novaQuantidade = produto.qtd;
+        }
+
+        if (novaQuantidade <= 0) {
+            produtosSelecionados = produtosSelecionados.filter(p => p.produto_id !== id);
+        } else {
+            item.quantidade = novaQuantidade;
+        }
+    }
+
+    renderizarItens();
+    carregarProdutosDia();
+    atualizarValorTotal();
+}
+
+// ===== RENDERIZAR PRODUTOS =====
+async function carregarProdutosDia() {
+    try {
+        const resp = await fetch(`${BASE_URL}/produto_dia`);
+        produtosDia = await resp.json();
+        addLog(`✅ Produtos carregados: ${produtosDia.length} itens`);
+        renderizarProdutos();
     } catch (error) {
-        addLog(`❌ Erro: ${error.message}`, 'error');
+        addLog(`❌ Erro ao carregar produtos: ${error.message}`, 'error');
     }
 }
 
-// ===== PRODUTOS CLIENTE =====
-async function carregarProdutosCliente() {
-    await carregarPrecosProdutos();
-    const dados = await fetchComTratamento(`${API}/produtos_cliente`, 'erroProdutos');
-    renderProdutosCliente(dados);
+function renderizarProdutos() {
+    const tbody = document.getElementById("listaProdutos");
+    tbody.innerHTML = "";
+
+    produtosDia.forEach(p => {
+        const item = produtosSelecionados.find(i => i.produto_id === p.id);
+        let qtd = item ? item.quantidade : 0;
+        const incremento = getIncremento(p.nome);
+        const podeInc = (qtd + incremento) <= p.qtd;
+        const podeDec = qtd > 0;
+        const qtdDisplay = formatarQuantidade(qtd, p.nome);
+        
+        let badge = '';
+        if (isCoxaSobrecoxa(p.nome)) badge = '<span class="coxa-badge">Coxa/Sobrecoxa (promoção)</span>';
+        if (isFrangoRecheado(p.nome)) badge = '<span class="frango-badge">Frango Recheado</span>';
+        
+        // Para produtos que não são Coxa nem Frango Recheado, usa input com step 0.5
+        const usaInput = isOutros(p.nome);
+        
+        if (usaInput) {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.nome} ${badge}<\/td>
+                    <td>R$ ${p.preco.toFixed(2)}<\/td>
+                    <td>${p.qtd}<\/td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <button class="btn btn-outline-danger btn-sm" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−<\/button>
+                            <input type="number" id="input-qtd-${p.id}" class="form-control form-control-sm input-quantidade" 
+                                   value="${qtd}" step="0.5" min="0" max="${p.qtd}"
+                                   onchange="atualizarQuantidadeInput(${p.id}, '${p.nome}')">
+                            <button class="btn btn-outline-success btn-sm" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+<\/button>
+                        <\/div>
+                    <\/td>
+                <\/tr>
+            `;
+        } else {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.nome} ${badge}<\/td>
+                    <td>R$ ${p.preco.toFixed(2)}<\/td>
+                    <td>${p.qtd}<\/td>
+                    <td class="text-center">
+                        <button class="btn btn-outline-danger btn-sm" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−<\/button>
+                        <span class="mx-2 fw-bold">${qtdDisplay}</span>
+                        <button class="btn btn-outline-success btn-sm" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+<\/button>
+                    <\/td>
+                <\/tr>
+            `;
+        }
+    });
+    atualizarValorTotal();
 }
 
-async function filtrarProdutosCliente() {
-    const nome = document.getElementById('filtroNomeProdutosCliente').value.trim();
-    if (!nome) return alert("Digite o nome");
+function renderizarItens() {
+    const tbody = document.getElementById("itensPedido");
+    tbody.innerHTML = "";
     
-    await carregarPrecosProdutos();
-    const dados = await fetchComTratamento(`${API}/produtos_cliente/filtrar?nome=${encodeURIComponent(nome)}`, 'erroProdutos');
-    renderProdutosCliente(dados);
-}
-
-function renderProdutosCliente(dados) {
-    const tabela = document.getElementById('tabelaProdutosCliente');
-    
-    if (!dados || dados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhum produto encontrado</td></tr>';
+    if (produtosSelecionados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Nenhum item selecionado<\/td></tr>';
         return;
     }
-
-    tabela.innerHTML = '';
-    let totalGeral = 0;
     
-    dados.forEach(item => {
-        const quantidade = Number(item.qtd);
-        const ehCoxa = isCoxaSobrecoxa(item.produto);
-        const precoUnit = precosProdutos[item.produto.toLowerCase()] || 0;
-        const valor = ehCoxa ? calcularPrecoCoxaSobrecoxa(quantidade) : quantidade * precoUnit;
-        totalGeral += valor;
-
-        const classe = ehCoxa ? 'coxa-sobrecoxa' : '';
-        const paresDisplay = ehCoxa ? `<span class="badge-pares">${quantidade} par(es)</span>` : '-';
-        const valorDisplay = ehCoxa ? 
-            `<span class="valor-promocao">R$ ${valor.toFixed(2)}</span>` : 
-            `<span class="valor-normal">R$ ${valor.toFixed(2)}</span>`;
-
-        tabela.innerHTML += `
-        <tr class="${classe}">
-            <td>${item.id}</td>
-            <td><strong>${item.cliente}</strong></td>
-            <td>${item.produto}</td>
-            <td>${ehCoxa ? quantidade + ' par(es)' : quantidade.toFixed(3)}</td>
-            <td>${paresDisplay}</td>
-            <td>${valorDisplay}</td>
-        </tr>`;
+    produtosSelecionados.forEach(p => {
+        const qtdDisplay = formatarQuantidade(p.quantidade, p.nome);
+        const subtotal = calcularSubtotal(p);
+        tbody.innerHTML += `<tr><td>${p.nome}<\/td><td>${qtdDisplay}<\/td><td>R$ ${subtotal.toFixed(2)}<\/td><\/tr>`;
     });
-
-    tabela.innerHTML += `<tr class="table-primary"><td colspan="5" class="text-end"><strong>TOTAL GERAL:</strong></td><td><strong>R$ ${totalGeral.toFixed(2)}</strong></td></tr>`;
 }
 
-async function deletarProdutosCliente() {
-    if (!confirm("Excluir TODOS os produtos?")) return;
-    try {
-        const res = await fetch(`${API}/produto/deletar`, { method: "DELETE" });
-        if (res.ok) {
-            addLog(`✅ Todos produtos excluídos`);
-            carregarProdutosCliente();
-        } else {
-            const error = await res.json();
-            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
-        }
-    } catch (error) {
-        addLog(`❌ Erro: ${error.message}`, 'error');
+// ===== CRIAR PEDIDO =====
+async function criarPedido() {
+    const cliente = document.getElementById("nomeCliente").value.trim().toUpperCase();
+    if (!cliente) { alert("Nome obrigatório"); return; }
+    if (produtosSelecionados.length === 0) { alert("Selecione produtos"); return; }
+
+    for (const item of produtosSelecionados) {
+        item.quantidade = arredondarQuantidade(item.quantidade, item.nome);
+        if (item.quantidade <= 0) { alert(`Quantidade inválida para ${item.nome}`); return; }
     }
-}
 
-function exportarProdutosCliente() {
-    const tabela = document.querySelector('#produtosCliente table').outerHTML;
-    const janela = window.open('', '', 'width=800,height=600');
-    janela.document.write(`
-        <html>
-        <head>
-            <title>Produtos do Cliente</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-            <style>
-                body { background: white; }
-                .coxa-sobrecoxa { background-color: #fef9c3 !important; }
-                .badge-pares { background-color: #3b82f6; color: white; padding: 2px 5px; border-radius: 10px; }
-                .table th { background-color: #f1f5f9; }
-            </style>
-        </head>
-        <body>
-            <div class="container mt-3">
-                ${tabela}
-            </div>
-        </body>
-        </html>
-    `);
-}
-
-// ===== AÇÕES =====
-async function finalizarPedido(id) {
-    if (!confirm("Finalizar pedido?")) return;
-    
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-    const dia = String(hoje.getDate()).padStart(2, '0');
-    const dataFormatada = `${ano}-${mes}-${dia}`;
-    
-    addLog(`📅 Finalizando pedido ${id} com data: ${dataFormatada}`, 'info');
-    
     try {
-        const res = await fetch(`${API}/pedido/${id}/finalizar`, {
+        const payload = { 
+            nome_cliente: cliente, 
+            produtos: produtosSelecionados.map(p => ({ 
+                produto_id: p.produto_id, 
+                quantidade: p.quantidade 
+            })) 
+        };
+        addLog(`📤 Enviando pedido: ${JSON.stringify(payload)}`, 'debug');
+
+        const resp = await fetch(`${BASE_URL}/pedido`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ data_finalizacao: dataFormatada })
+            body: JSON.stringify(payload)
         });
-        
-        if (res.ok) {
-            addLog(`✅ Pedido ${id} finalizado com sucesso`);
-            carregarPedidosAbertos();
-            carregarPedidosFinalizados();
-        } else {
-            const error = await res.json();
-            addLog(`❌ Erro ao finalizar: ${error.erro}`, 'error');
-            alert(`Erro: ${error.erro}`);
-        }
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.erro || "Erro ao criar pedido");
+
+        alert(`✅ Pedido criado! ID: ${data.pedido_id} - Total: R$ ${data.valor_total.toFixed(2)}`);
+        produtosSelecionados = [];
+        document.getElementById("nomeCliente").value = "";
+        renderizarItens();
+        carregarProdutosDia();
     } catch (error) {
-        addLog(`❌ Erro: ${error.message}`, 'error');
-        alert(`Erro: ${error.message}`);
+        alert("Erro de conexão");
+        console.error(error);
     }
 }
 
-async function excluirPedido(id) {
-    if (!confirm("Excluir pedido?")) return;
-    try {
-        const res = await fetch(`${API}/pedido/${id}`, { method: "DELETE" });
-        if (res.ok) {
-            addLog(`✅ Pedido ${id} excluído`);
-            carregarPedidosAbertos();
-        } else {
-            const error = await res.json();
-            addLog(`❌ Erro ao excluir: ${error.erro}`, 'error');
-            alert(`Erro: ${error.erro}`);
-        }
-    } catch (error) {
-        addLog(`❌ Erro: ${error.message}`, 'error');
-        alert(`Erro: ${error.message}`);
-    }
-}
-
-// ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', function() {
-    addLog('🚀 Painel Administrativo iniciado');
-    
-    carregarPedidosAbertos();
-    carregarPedidosFinalizados();
-    carregarProdutosCliente();
-});
+carregarProdutosDia();
 </script>
-
 </body>
 </html>
