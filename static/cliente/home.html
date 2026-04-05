@@ -29,9 +29,9 @@
         .btn-outline-danger:hover { background: #ef4444; color: white; }
         .btn-outline-success { border-color: #22c55e; color: #22c55e; }
         .btn-outline-success:hover { background: #22c55e; color: white; }
-        .input-quantidade { width: 100px; text-align: center; margin: 0 5px; }
+        .input-quantidade { width: 120px; text-align: center; margin: 0 5px; }
         .valor-total { font-size: 1.5rem; font-weight: 700; color: #3b82f6; }
-        @media (max-width: 768px) { .input-quantidade { width: 70px; } .btn-sm { padding: 4px 8px; } }
+        @media (max-width: 768px) { .input-quantidade { width: 80px; } .btn-sm { padding: 4px 8px; } }
     </style>
 </head>
 <body>
@@ -132,7 +132,8 @@ function getIncremento(nome) {
     return 0.5;                               // Demais produtos: 0.5 em 0.5
 }
 
-function arredondarQuantidade(valor, nome) {
+// ARREDONDAMENTO APENAS PARA OS BOTÕES
+function arredondarParaBotoes(valor, nome) {
     if (isCoxaSobrecoxa(nome)) {
         return Math.round(valor);  // Coxa/Sobrecoxa: números inteiros (pares)
     }
@@ -142,6 +143,7 @@ function arredondarQuantidade(valor, nome) {
     return Math.round(valor * 2) / 2;  // Demais: múltiplos de 0.5
 }
 
+// NÃO ARREDONDA PARA INPUT MANUAL - ACEITA QUALQUER DECIMAL
 function formatarQuantidade(valor, nome) {
     if (isCoxaSobrecoxa(nome)) {
         return valor.toFixed(0) + ' par(es)';
@@ -149,7 +151,7 @@ function formatarQuantidade(valor, nome) {
     if (isFrangoRecheado(nome)) {
         return valor.toFixed(0);
     }
-    return valor.toFixed(2);
+    return valor.toFixed(3); // Mostra até 3 casas decimais para precisão
 }
 
 // ===== CÁLCULO DE PREÇO =====
@@ -162,10 +164,6 @@ function calcularPrecoCoxaSobrecoxa(pares) {
     if (pares === 5) return 40;
     if (pares === 6) return 50;
     return 50 + ((pares - 6) * 10);
-}
-
-function getQuantidadeReal(nome, quantidade) {
-    return quantidade; // A quantidade já está correta (pares para Coxa)
 }
 
 function calcularSubtotal(item) {
@@ -191,7 +189,7 @@ function atualizarValorTotal() {
     document.getElementById('valorTotal').innerText = total.toFixed(2);
 }
 
-// ===== ATUALIZAR QUANTIDADE =====
+// ===== ATUALIZAR QUANTIDADE VIA INPUT (SEM ARREDONDAMENTO) =====
 function atualizarQuantidadeInput(id, nome) {
     const input = document.getElementById(`input-qtd-${id}`);
     if (!input) return;
@@ -202,11 +200,11 @@ function atualizarQuantidadeInput(id, nome) {
     const produto = produtosDia.find(p => p.id === id);
     if (!produto) return;
 
-    valor = arredondarQuantidade(valor, nome);
-
+    // NÃO arredonda o valor digitado manualmente - aceita qualquer decimal
+    // Apenas valida se não ultrapassa o estoque
     if (valor > produto.qtd) {
         valor = produto.qtd;
-        input.value = formatarQuantidade(valor, nome);
+        input.value = valor.toFixed(3);
     }
 
     let item = produtosSelecionados.find(p => p.produto_id === id);
@@ -221,22 +219,26 @@ function atualizarQuantidadeInput(id, nome) {
         }
     }
 
+    addLog(`📝 Quantidade manual de "${nome}" alterada para ${valor}`, 'debug');
     renderizarItens();
     carregarProdutosDia();
     atualizarValorTotal();
 }
 
+// ===== ALTERAR QUANTIDADE VIA BOTÕES (COM ARREDONDAMENTO) =====
 function alterarQuantidade(id, nome, delta) {
     const produto = produtosDia.find(p => p.id === id);
     let item = produtosSelecionados.find(p => p.produto_id === id);
 
     if (!item && delta > 0) {
         let quantidadeInicial = Math.abs(delta);
-        quantidadeInicial = arredondarQuantidade(quantidadeInicial, nome);
+        // Apenas para botões, arredonda conforme a regra
+        quantidadeInicial = arredondarParaBotoes(quantidadeInicial, nome);
         produtosSelecionados.push({ produto_id: id, nome, quantidade: quantidadeInicial });
     } else if (item) {
         let novaQuantidade = item.quantidade + delta;
-        novaQuantidade = arredondarQuantidade(novaQuantidade, nome);
+        // Apenas para botões, arredonda conforme a regra
+        novaQuantidade = arredondarParaBotoes(novaQuantidade, nome);
 
         if (novaQuantidade > produto.qtd) {
             novaQuantidade = produto.qtd;
@@ -282,7 +284,7 @@ function renderizarProdutos() {
         if (isCoxaSobrecoxa(p.nome)) badge = '<span class="coxa-badge">Coxa/Sobrecoxa (promoção)</span>';
         if (isFrangoRecheado(p.nome)) badge = '<span class="frango-badge">Frango Recheado</span>';
 
-        // Para produtos que não são Coxa nem Frango Recheado, usa input com step 0.5
+        // Para produtos que não são Coxa nem Frango Recheado, usa input com step 0.001 (permite qualquer decimal)
         const usaInput = isOutros(p.nome);
 
         if (usaInput) {
@@ -295,7 +297,7 @@ function renderizarProdutos() {
                         <div class="d-flex align-items-center justify-content-center">
                             <button class="btn btn-outline-danger btn-sm" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−<\/button>
                             <input type="number" id="input-qtd-${p.id}" class="form-control form-control-sm input-quantidade"
-                                   value="${qtd}" step="0.5" min="0" max="${p.qtd}"
+                                   value="${qtd}" step="0.001" min="0" max="${p.qtd}"
                                    onchange="atualizarQuantidadeInput(${p.id}, '${p.nome}')">
                             <button class="btn btn-outline-success btn-sm" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+<\/button>
                         <\/div>
@@ -332,7 +334,7 @@ function renderizarItens() {
     produtosSelecionados.forEach(p => {
         const qtdDisplay = formatarQuantidade(p.quantidade, p.nome);
         const subtotal = calcularSubtotal(p);
-        tbody.innerHTML += `<tr><td>${p.nome}<\/td><td>${qtdDisplay}<\/td><td>R$ ${subtotal.toFixed(2)}<\/td><\/tr>`;
+        tbody.innerHTML += `<tr><td class="fw-bold">${p.nome}<\/td><td>${qtdDisplay}<\/td><td>R$ ${subtotal.toFixed(2)}<\/td><\/tr>`;
     });
 }
 
@@ -342,8 +344,8 @@ async function criarPedido() {
     if (!cliente) { alert("Nome obrigatório"); return; }
     if (produtosSelecionados.length === 0) { alert("Selecione produtos"); return; }
 
+    // NÃO arredonda as quantidades no envio - mantém o valor exato digitado
     for (const item of produtosSelecionados) {
-        item.quantidade = arredondarQuantidade(item.quantidade, item.nome);
         if (item.quantidade <= 0) { alert(`Quantidade inválida para ${item.nome}`); return; }
     }
 
@@ -352,7 +354,7 @@ async function criarPedido() {
             nome_cliente: cliente,
             produtos: produtosSelecionados.map(p => ({
                 produto_id: p.produto_id,
-                quantidade: p.quantidade
+                quantidade: p.quantidade  // Mantém o valor exato digitado
             }))
         };
         addLog(`📤 Enviando pedido: ${JSON.stringify(payload)}`, 'debug');
