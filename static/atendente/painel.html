@@ -16,8 +16,8 @@
         .tab-pane.active { display: block; }
         .console-log { background: #1e1e1e; color: #0f0; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; font-size: 11px; margin-bottom: 15px; }
         .badge-pares { background: #3b82f6; color: white; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; margin-left: 5px; }
-        .valor-promocao { color: #dc2626; font-weight: bold; }
-        .table-warning { background-color: #fef9c3 !important; }
+        .sem-horario { background-color: #f8d7da !important; color: #721c24 !important; }
+        .com-horario { background-color: #d4edda !important; color: #155724 !important; }
     </style>
 </head>
 <body>
@@ -54,7 +54,7 @@
                         <thead class="table-dark">
                             <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data</th><th>Horário</th><th>Ações</th></tr>
                         </thead>
-                        <tbody id="tabelaAbertos"><tr><td colspan="6" class="text-center">Carregando...</td></tr></tbody>
+                        <tbody id="tabelaAbertos"><tr><td colspan="6" class="text-center">Carregando...<\/td><\/tr> </tbody>
                     </table>
                 </div>
             </div>
@@ -75,19 +75,19 @@
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-success">
-                            <tr><th>ID</th><th>Cliente</th><th>Valor</th><th>Data Finalização</th><th>Horário</th></tr>
+                            <td><th>ID</th><th>Cliente</th><th>Valor</th><th>Data Finalização</th><th>Horário</th></tr>
                         </thead>
-                        <tbody id="tabelaFinalizados"><tr><td colspan="5" class="text-center">Carregando...</td></tr></tbody>
+                        <tbody id="tabelaFinalizados"><tr><td colspan="5" class="text-center">Carregando...<\/td><\/tr> </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Aba Produtos do Cliente -->
+    <!-- Aba Produtos do Cliente - MODIFICADA: Mostra apenas produtos com horário -->
     <div id="abaProdutos" class="tab-pane">
         <div class="card">
-            <div class="card-header">📦 Produtos do Cliente</div>
+            <div class="card-header">📦 Produtos do Cliente <span class="badge bg-info ms-2">Apenas com horário registrado</span></div>
             <div class="card-body">
                 <div class="row mb-3">
                     <div class="col-md-4"><input type="text" id="filtroNomeProdutos" class="form-control" placeholder="Filtrar por cliente"></div>
@@ -95,13 +95,23 @@
                     <div class="col-md-2"><button class="btn btn-secondary" onclick="carregarProdutosCliente()">🔄 Limpar</button></div>
                     <div class="col-md-4 text-end"><button class="btn btn-danger btn-sm" onclick="deletarProdutosCliente()">🗑 Excluir Todos</button></div>
                 </div>
-                <div class="alert alert-info small">ℹ️ <strong>Coxa/Sobrecoxa:</strong> Quantidade em PARES. Tabela promocional: 1=R$10 | 2=R$20 | 3=R$25 | 4=R$35 | 5=R$40 | 6=R$50 | 7+=R$50 + R$10/par</div>
+                <div class="alert alert-info small">
+                    <strong>📌 Filtro aplicado:</strong> Exibindo apenas produtos que possuem horário registrado.
+                </div>
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead class="table-info">
-                            <tr><th>ID</th><th>Cliente</th><th>Produto</th><th>Quantidade</th><th>Valor</th></tr>
-                        </thead>
-                        <tbody id="tabelaProdutos"><tr><td colspan="5" class="text-center">Carregando...</td></tr></tbody>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Horário</th>
+                                <th>Status</th>
+                            </thead>
+                        <tbody id="tabelaProdutos">
+                            <tr><td colspan="6" class="text-center">Carregando...<\/td><\/tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -110,7 +120,7 @@
 </div>
 
 <script>
-const API = "https://vendas-svoq.onrender.com";
+const API = "http://127.0.0.1:5000";
 let logsVisiveis = false;
 let precosProdutos = {};
 
@@ -161,15 +171,13 @@ function isCoxaSobrecoxa(nome) {
     return nomeLower.indexOf('coxa') !== -1 && nomeLower.indexOf('sobrecoxa') !== -1;
 }
 
-function calcularPrecoCoxaSobrecoxa(pares) {
-    if (pares <= 0) return 0;
-    if (pares === 1) return 10;
-    if (pares === 2) return 20;
-    if (pares === 3) return 25;
-    if (pares === 4) return 35;
-    if (pares === 5) return 40;
-    if (pares === 6) return 50;
-    return 50 + ((pares - 6) * 10);
+function formatarHorario(horario) {
+    if (!horario) return "-";
+    if (horario.indexOf(':') !== -1) {
+        var partes = horario.split(':');
+        return partes[0] + ':' + partes[1];
+    }
+    return horario;
 }
 
 // ========== PEDIDOS ABERTOS ==========
@@ -182,7 +190,7 @@ async function carregarPedidosAbertos() {
         var tabela = document.getElementById('tabelaAbertos');
 
         if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido aberto</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido aberto<\/td><\/tr>';
             return;
         }
 
@@ -192,21 +200,21 @@ async function carregarPedidosAbertos() {
             var valorFormatado = Number(p.valor_total).toFixed(2);
             var dataFormatada = formatarDataBR(p.data_pedido);
             var horario = p.horario || '-';
-            tabela.innerHTML += '<tr>' +
-                '<td class="fw-bold">' + p.id + '</td>' +
-                '<td>' + p.nome_cliente + '</td>' +
-                '<td class="text-end">R$ ' + valorFormatado + '</td>' +
-                '<td class="text-center">' + dataFormatada + '</td>' +
-                '<td class="text-center">' + horario + '</td>' +
+            tabela.innerHTML += '</tr>' +
+                '<td class="fw-bold">' + p.id + '<\/td>' +
+                '<td>' + p.nome_cliente + '<\/td>' +
+                '<td class="text-end">R$ ' + valorFormatado + '<\/td>' +
+                '<td class="text-center">' + dataFormatada + '<\/td>' +
+                '<td class="text-center">' + horario + '<\/td>' +
                 '<td class="text-center">' +
-                    '<button class="btn btn-success btn-sm" onclick="finalizarPedido(' + p.id + ')">✔ Finalizar</button>' +
-                    '<button class="btn btn-danger btn-sm" onclick="excluirPedido(' + p.id + ')">🗑 Excluir</button>' +
-                '</td>' +
-            '</tr>';
+                    '<button class="btn btn-success btn-sm" onclick="finalizarPedido(' + p.id + ')">✔ Finalizar<\/button>' +
+                    '<button class="btn btn-danger btn-sm" onclick="excluirPedido(' + p.id + ')">🗑 Excluir<\/button>' +
+                '<\/td>' +
+            '<\/tr>';
         }
     } catch (error) {
         addLog('❌ Erro: ' + error.message, 'error');
-        document.getElementById('tabelaAbertos').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar</td></tr>';
+        document.getElementById('tabelaAbertos').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar<\/td><\/tr>';
     }
 }
 
@@ -218,7 +226,7 @@ async function filtrarPedidosAbertos() {
         var dados = await res.json();
         var tabela = document.getElementById('tabelaAbertos');
         if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido encontrado</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum pedido encontrado<\/td><\/tr>';
             return;
         }
         tabela.innerHTML = '';
@@ -228,16 +236,16 @@ async function filtrarPedidosAbertos() {
             var dataFormatada = formatarDataBR(p.data_pedido);
             var horario = p.horario || '-';
             tabela.innerHTML += '<tr>' +
-                '<td class="fw-bold">' + p.id + '</td>' +
-                '<td>' + p.nome_cliente + '</td>' +
-                '<td class="text-end">R$ ' + valorFormatado + '</td>' +
-                '<td class="text-center">' + dataFormatada + '</td>' +
-                '<td class="text-center">' + horario + '</td>' +
+                '<td class="fw-bold">' + p.id + '<\/td>' +
+                '<td>' + p.nome_cliente + '<\/td>' +
+                '<td class="text-end">R$ ' + valorFormatado + '<\/td>' +
+                '<td class="text-center">' + dataFormatada + '<\/td>' +
+                '<td class="text-center">' + horario + '<\/td>' +
                 '<td class="text-center">' +
-                    '<button class="btn btn-success btn-sm" onclick="finalizarPedido(' + p.id + ')">✔ Finalizar</button>' +
-                    '<button class="btn btn-danger btn-sm" onclick="excluirPedido(' + p.id + ')">🗑 Excluir</button>' +
-                '</td>' +
-            '</tr>';
+                    '<button class="btn btn-success btn-sm" onclick="finalizarPedido(' + p.id + ')">✔ Finalizar<\/button>' +
+                    '<button class="btn btn-danger btn-sm" onclick="excluirPedido(' + p.id + ')">🗑 Excluir<\/button>' +
+                '<\/td>' +
+            '<\/tr>';
         }
     } catch (error) { addLog('❌ Erro: ' + error.message, 'error'); }
 }
@@ -266,7 +274,7 @@ async function carregarPedidosFinalizados() {
         var tabela = document.getElementById('tabelaFinalizados');
 
         if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum pedido finalizado</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum pedido finalizado<\/td><\/tr>';
             return;
         }
 
@@ -277,16 +285,16 @@ async function carregarPedidosFinalizados() {
             var dataFinalizacao = formatarDataBR(p.data_finalizacao);
             var horario = p.horario || '-';
             tabela.innerHTML += '<tr>' +
-                '<td class="fw-bold">' + p.id + '</td>' +
-                '<td>' + p.nome_cliente + '</td>' +
-                '<td class="text-end">R$ ' + valorFormatado + '</td>' +
-                '<td class="text-center">' + dataFinalizacao + '</td>' +
-                '<td class="text-center">' + horario + '</td>' +
-            '</tr>';
+                '<td class="fw-bold">' + p.id + '<\/td>' +
+                '<td>' + p.nome_cliente + '<\/td>' +
+                '<td class="text-end">R$ ' + valorFormatado + '<\/td>' +
+                '<td class="text-center">' + dataFinalizacao + '<\/td>' +
+                '<td class="text-center">' + horario + '<\/td>' +
+            '<\/tr>';
         }
     } catch (error) {
         addLog('❌ Erro: ' + error.message, 'error');
-        document.getElementById('tabelaFinalizados').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar</td></tr>';
+        document.getElementById('tabelaFinalizados').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar<\/td><\/tr>';
     }
 }
 
@@ -298,7 +306,7 @@ async function filtrarPedidosFinalizados() {
         var dados = await res.json();
         var tabela = document.getElementById('tabelaFinalizados');
         if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum pedido encontrado</td></tr>';
+            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum pedido encontrado<\/td><\/tr>';
             return;
         }
         tabela.innerHTML = '';
@@ -308,12 +316,12 @@ async function filtrarPedidosFinalizados() {
             var dataFinalizacao = formatarDataBR(p.data_finalizacao);
             var horario = p.horario || '-';
             tabela.innerHTML += '<tr>' +
-                '<td class="fw-bold">' + p.id + '</td>' +
-                '<td>' + p.nome_cliente + '</td>' +
-                '<td class="text-end">R$ ' + valorFormatado + '</td>' +
-                '<td class="text-center">' + dataFinalizacao + '</td>' +
-                '<td class="text-center">' + horario + '</td>' +
-            '</tr>';
+                '<td class="fw-bold">' + p.id + '<\/td>' +
+                '<td>' + p.nome_cliente + '<\/td>' +
+                '<td class="text-end">R$ ' + valorFormatado + '<\/td>' +
+                '<td class="text-center">' + dataFinalizacao + '<\/td>' +
+                '<td class="text-center">' + horario + '<\/td>' +
+            '<\/tr>';
         }
     } catch (error) { addLog('❌ Erro: ' + error.message, 'error'); }
 }
@@ -325,95 +333,91 @@ async function deletarPedidosFinalizados() {
     addLog('✅ Pedidos finalizados excluídos');
 }
 
-// ========== PRODUTOS DO CLIENTE ==========
-async function carregarPrecosProdutos() {
-    try {
-        var res = await fetch(API + '/produto_dia');
-        var produtos = await res.json();
-        for (var i = 0; i < produtos.length; i++) {
-            var p = produtos[i];
-            precosProdutos[p.nome.toLowerCase()] = p.preco;
-        }
-        addLog('✅ ' + produtos.length + ' preços carregados');
-    } catch (error) { addLog('⚠️ Erro preços: ' + error.message, 'warning'); }
-}
-
+// ========== PRODUTOS DO CLIENTE - MOSTRA APENAS COM HORÁRIO ==========
 async function carregarProdutosCliente() {
-    addLog('📦 Carregando produtos...');
-    await carregarPrecosProdutos();
+    addLog('📦 Carregando produtos do cliente...');
     try {
         var res = await fetch(API + '/produtos_cliente');
-        var dados = await res.json();
-        addLog('✅ ' + dados.length + ' produtos');
+        var todosProdutos = await res.json();
+
+        // 🔥 FILTRO: Mostrar apenas produtos que possuem horário registrado
+        var produtosComHorario = todosProdutos.filter(function(produto) {
+            return produto.horario && produto.horario !== '' && produto.horario !== null;
+        });
+
+        addLog('✅ Total de produtos: ' + todosProdutos.length + ' | Com horário: ' + produtosComHorario.length);
         var tabela = document.getElementById('tabelaProdutos');
 
-        if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum produto encontrado</td></tr>';
+        if (!produtosComHorario || produtosComHorario.length === 0) {
+            tabela.innerHTML = '<tr><td colspan="6" class="text-center text-warning">⚠️ Nenhum produto com horário registrado encontrado.<\/td><\/tr>';
             return;
         }
 
         tabela.innerHTML = '';
-        var totalGeral = 0;
-        for (var i = 0; i < dados.length; i++) {
-            var item = dados[i];
+        for (var i = 0; i < produtosComHorario.length; i++) {
+            var item = produtosComHorario[i];
             var qtd = Number(item.qtd);
+            var qtdDisplay = qtd.toFixed(3);
+            var horario = item.horario || '-';
+            var horarioDisplay = formatarHorario(horario);
+
+            // Verifica se é Coxa/Sobrecoxa para adicionar badge
             var ehCoxa = isCoxaSobrecoxa(item.produto);
-            var preco = precosProdutos[item.produto.toLowerCase()] || 0;
-            var valor = ehCoxa ? calcularPrecoCoxaSobrecoxa(qtd) : qtd * preco;
-            totalGeral += valor;
-            var valorDisplay = ehCoxa ? '<span class="valor-promocao">R$ ' + valor.toFixed(2) + '</span>' : 'R$ ' + valor.toFixed(2);
-            var classe = ehCoxa ? 'table-warning' : '';
-            var badge = ehCoxa ? '<span class="badge-pares">' + qtd + ' par(es)</span>' : '';
-            var qtdDisplay = ehCoxa ? qtd + ' par(es)' : qtd.toFixed(3);
-            tabela.innerHTML += '<tr class="' + classe + '">' +
-                '<td class="fw-bold">' + item.id + '</td>' +
-                '<td><strong>' + item.cliente + '</strong></td>' +
-                '<td>' + item.produto + ' ' + badge + '</td>' +
-                '<td>' + qtdDisplay + '</td>' +
-                '<td>' + valorDisplay + '</td>' +
-            '</tr>';
+            var badge = ehCoxa ? ' <span class="badge-pares">(' + qtd + ' pares)</span>' : '';
+
+            tabela.innerHTML += '</tr>' +
+                '<td class="fw-bold">' + item.id + '<\/td>' +
+                '<td><strong>' + item.cliente + '<\/strong><\/td>' +
+                '<td>' + item.produto + badge + '<\/td>' +
+                '<td>' + qtdDisplay + '<\/td>' +
+                '<td class="text-center"><span class="badge bg-success">' + horarioDisplay + '<\/span><\/td>' +
+                '<td class="text-center"><span class="badge bg-success">✅ Registrado<\/span><\/td>' +
+            '<\/tr>';
         }
-        tabela.innerHTML += '<tr class="table-primary"><td colspan="4" class="text-end"><strong>TOTAL GERAL:</strong></td><td class="fw-bold">R$ ' + totalGeral.toFixed(2) + '</td></tr>';
     } catch (error) {
         addLog('❌ Erro: ' + error.message, 'error');
-        document.getElementById('tabelaProdutos').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Erro ao carregar</td></tr>';
+        document.getElementById('tabelaProdutos').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Erro ao carregar produtos<\/td><\/tr>';
     }
 }
 
 async function filtrarProdutosCliente() {
     var nome = document.getElementById('filtroNomeProdutos').value.trim();
     if (!nome) return carregarProdutosCliente();
-    await carregarPrecosProdutos();
+    addLog('🔍 Filtrando produtos por cliente: ' + nome);
     try {
         var res = await fetch(API + '/produtos_cliente/filtrar?nome=' + encodeURIComponent(nome));
-        var dados = await res.json();
+        var todosProdutos = await res.json();
+
+        // 🔥 FILTRO: Mostrar apenas produtos que possuem horário registrado
+        var produtosComHorario = todosProdutos.filter(function(produto) {
+            return produto.horario && produto.horario !== '' && produto.horario !== null;
+        });
+
         var tabela = document.getElementById('tabelaProdutos');
-        if (!dados || dados.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum produto encontrado</td></tr>';
+        if (!produtosComHorario || produtosComHorario.length === 0) {
+            tabela.innerHTML = '<tr><td colspan="6" class="text-center text-warning">⚠️ Nenhum produto com horário registrado encontrado para este cliente.<\/td><\/tr>';
             return;
         }
         tabela.innerHTML = '';
-        var totalGeral = 0;
-        for (var i = 0; i < dados.length; i++) {
-            var item = dados[i];
+        for (var i = 0; i < produtosComHorario.length; i++) {
+            var item = produtosComHorario[i];
             var qtd = Number(item.qtd);
+            var qtdDisplay = qtd.toFixed(3);
+            var horario = item.horario || '-';
+            var horarioDisplay = formatarHorario(horario);
+
             var ehCoxa = isCoxaSobrecoxa(item.produto);
-            var preco = precosProdutos[item.produto.toLowerCase()] || 0;
-            var valor = ehCoxa ? calcularPrecoCoxaSobrecoxa(qtd) : qtd * preco;
-            totalGeral += valor;
-            var valorDisplay = ehCoxa ? '<span class="valor-promocao">R$ ' + valor.toFixed(2) + '</span>' : 'R$ ' + valor.toFixed(2);
-            var classe = ehCoxa ? 'table-warning' : '';
-            var badge = ehCoxa ? '<span class="badge-pares">' + qtd + ' par(es)</span>' : '';
-            var qtdDisplay = ehCoxa ? qtd + ' par(es)' : qtd.toFixed(3);
-            tabela.innerHTML += '<tr class="' + classe + '">' +
-                '<td class="fw-bold">' + item.id + '</td>' +
-                '<td><strong>' + item.cliente + '</strong></td>' +
-                '<td>' + item.produto + ' ' + badge + '</td>' +
-                '<td>' + qtdDisplay + '</td>' +
-                '<td>' + valorDisplay + '</td>' +
-            '</tr>';
+            var badge = ehCoxa ? ' <span class="badge-pares">(' + qtd + ' pares)</span>' : '';
+
+            tabela.innerHTML += '<tr>' +
+                '<td class="fw-bold">' + item.id + '<\/td>' +
+                '<td><strong>' + item.cliente + '<\/strong><\/td>' +
+                '<td>' + item.produto + badge + '<\/td>' +
+                '<td>' + qtdDisplay + '<\/td>' +
+                '<td class="text-center"><span class="badge bg-success">' + horarioDisplay + '<\/span><\/td>' +
+                '<td class="text-center"><span class="badge bg-success">✅ Registrado<\/span><\/td>' +
+            '<\/tr>';
         }
-        tabela.innerHTML += '<tr class="table-primary"><td colspan="4" class="text-end"><strong>TOTAL GERAL:</strong></td><td class="fw-bold">R$ ' + totalGeral.toFixed(2) + '</td></tr>';
     } catch (error) { addLog('❌ Erro: ' + error.message, 'error'); }
 }
 
