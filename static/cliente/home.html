@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        body { background-color: #f8f9fa; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
         .card { border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .table th { background-color: #e9ecef; }
         .coxa-sobrecoxa-badge {
@@ -27,12 +27,12 @@
             border-radius: 5px;
             max-height: 200px;
             overflow-y: auto;
-            font-size: 12px;
+            font-size: 11px;
             margin-top: 20px;
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
 <div class="container mt-4">
     <div class="card">
@@ -79,7 +79,7 @@
             <h4 class="mt-4">🛍️ Itens do Pedido</h4>
             <div class="table-responsive">
                 <table class="table table-sm table-striped">
-                    <thead><td><th>Produto</th><th>Quantidade</th><th>Preço</th></tr></thead>
+                    <thead><tr><th>Produto</th><th>Quantidade</th><th>Preço</th><tr></thead>
                     <tbody id="itensPedido"></tbody>
                 </table>
             </div>
@@ -97,10 +97,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-const BASE_URL = "https://vendas-svoq.onrender.com";
+const BASE_URL = "http://127.0.0.1:5000";
 
 let produtosDia = [];
 let produtosSelecionados = [];
@@ -110,10 +108,10 @@ let logsVisiveis = false;
 function addLog(mensagem, tipo = 'info') {
     const logDiv = document.getElementById('logMessages');
     const timestamp = new Date().toLocaleTimeString('pt-BR', { hour12: false });
-    let cor = '#00ff00';
-    if (tipo === 'error') cor = '#ff5555';
-    if (tipo === 'warning') cor = '#ffaa00';
-    if (tipo === 'debug') cor = '#8888ff';
+    let cor = '#0f0';
+    if (tipo === 'error') cor = '#f55';
+    if (tipo === 'warning') cor = '#ff0';
+    if (tipo === 'debug') cor = '#88f';
 
     logDiv.innerHTML += `<div style="color: ${cor}">[${timestamp}] ${mensagem}</div>`;
     const consoleDiv = document.getElementById('consoleLogs');
@@ -132,6 +130,7 @@ function limparLogs() {
     addLog('🧹 Logs limpos', 'info');
 }
 
+// ===== FUNÇÃO PARA OBTER HORÁRIO ATUAL =====
 function obterHorarioAtual() {
     const agora = new Date();
     const horas = String(agora.getHours()).padStart(2, '0');
@@ -174,7 +173,7 @@ function arredondarQuantidade(valor, nome) {
 }
 
 function formatarQuantidade(valor, nome) {
-    if (isCategoria2(nome)) return valor.toFixed(0);
+    if (isCategoria2(nome)) return valor.toFixed(0) + ' par(es)';
     else if (isCategoria3(nome)) return valor.toFixed(0);
     else if (isCategoria4(nome)) return valor.toFixed(1);
     else return valor.toFixed(3);
@@ -230,7 +229,7 @@ function atualizarQuantidadeInput(id, nome) {
         else item.quantidade = valor;
     }
     renderizarItens();
-    carregarProdutosDia();
+    renderizarProdutos();
     atualizarValorTotal();
 }
 
@@ -260,21 +259,29 @@ function renderizarProdutos() {
             item.quantidade = qtd;
         }
         if (temInputLivre) {
-            tbody.innerHTML += `<tr><td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}<\/td>
-            <td>R$ ${p.preco.toFixed(2)}<\/td><td>${p.qtd}<\/td>
-            <td class="text-center"><div class="d-flex align-items-center justify-content-center">
-                <button class="btn btn-outline-danger btn-sm me-1" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
-                <input type="number" id="input-qtd-${p.id}" class="form-control form-control-sm text-center mx-1" style="width: 100px;" step="0.001" min="0" max="${p.qtd}" value="${qtd}" onchange="atualizarQuantidadeInput(${p.id}, '${p.nome}')">
-                <button class="btn btn-outline-success btn-sm ms-1" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
-            <\/div><\/td><\/tr>`;
+            tbody.innerHTML += `<tr>
+                <td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}<\/td>
+                <td>R$ ${p.preco.toFixed(2)}<\/td>
+                <td>${p.qtd}<\/td>
+                <td class="text-center">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <button class="btn btn-outline-danger btn-sm me-1" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
+                        <input type="number" id="input-qtd-${p.id}" class="form-control form-control-sm text-center mx-1" style="width: 100px;" step="0.001" min="0" max="${p.qtd}" value="${qtd}" onchange="atualizarQuantidadeInput(${p.id}, '${p.nome}')">
+                        <button class="btn btn-outline-success btn-sm ms-1" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
+                    <\/div>
+                <\/td>
+            <\/tr>`;
         } else {
-            tbody.innerHTML += `<tr><td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}<\/td>
-            <td>R$ ${p.preco.toFixed(2)}<\/td><td>${p.qtd}<\/td>
-            <td class="text-center">
-                <button class="btn btn-outline-danger btn-sm" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
-                <span class="mx-2 fw-bold">${formatarQuantidade(qtd, p.nome)}</span>
-                <button class="btn btn-outline-success btn-sm" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
-            <\/td><\/tr>`;
+            tbody.innerHTML += `<tr>
+                <td>${p.nome} ${isCategoria2(p.nome) ? '<span class="coxa-sobrecoxa-badge">Coxa/Sobrecoxa</span>' : ''}<\/td>
+                <td>R$ ${p.preco.toFixed(2)}<\/td>
+                <td>${p.qtd}<\/td>
+                <td class="text-center">
+                    <button class="btn btn-outline-danger btn-sm" ${!podeDec ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${-incremento})">−</button>
+                    <span class="mx-2 fw-bold">${formatarQuantidade(qtd, p.nome)}</span>
+                    <button class="btn btn-outline-success btn-sm" ${!podeInc ? 'disabled' : ''} onclick="alterarQuantidade(${p.id}, '${p.nome}', ${incremento})">+</button>
+                <\/td>
+            <\/tr>`;
         }
     });
     atualizarValorTotal();
@@ -301,7 +308,11 @@ function renderizarItens() {
     const tbody = document.getElementById("itensPedido");
     tbody.innerHTML = "";
     produtosSelecionados.forEach(p => {
-        tbody.innerHTML += `<tr><td>${p.nome}<\/td><td>${formatarQuantidade(p.quantidade, p.nome)}<\/td><td>R$ ${calcularSubtotal(p).toFixed(2)}<\/td><\/tr>`;
+        tbody.innerHTML += `<tr>
+            <td>${p.nome}<\/td>
+            <td>${formatarQuantidade(p.quantidade, p.nome)}<\/td>
+            <td>R$ ${calcularSubtotal(p).toFixed(2)}<\/td>
+        <\/tr>`;
     });
 }
 
@@ -310,6 +321,7 @@ async function criarPedido() {
     if (!cliente) { alert("Nome obrigatório"); return; }
     if (produtosSelecionados.length === 0) { alert("Selecione produtos"); return; }
 
+    // 🔥 OBTÉM O HORÁRIO (se vazio, usa o atual)
     let horario = document.getElementById("horarioPedido").value;
     if (!horario) {
         horario = obterHorarioAtual();
@@ -329,37 +341,64 @@ async function criarPedido() {
         }
     }
 
-    const payload = {
-        nome_cliente: cliente,
-        horario: horario,
-        produtos: produtosSelecionados.map(p => ({
-            produto_id: p.produto_id,
-            quantidade: p.quantidade
-        }))
-    };
-
-    addLog(`📤 Enviando pedido: ${JSON.stringify(payload)}`, 'debug');
+    const valorTotalCalculado = calcularValorTotal();
 
     try {
-        const resp = await fetch(`${BASE_URL}/pedido`, {
+        // Primeiro: Cria o pedido principal
+        const payloadPedido = {
+            nome_cliente: cliente,
+            horario: horario,
+            produtos: produtosSelecionados.map(p => ({
+                produto_id: p.produto_id,
+                quantidade: p.quantidade
+            }))
+        };
+
+        addLog(`📤 Enviando pedido: ${JSON.stringify(payloadPedido)}`, 'debug');
+
+        const respPedido = await fetch(`${BASE_URL}/pedido`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(payload)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadPedido)
         });
 
-        const data = await resp.json();
+        const dataPedido = await respPedido.json();
 
-        if (!resp.ok) {
-            addLog(`❌ Erro do servidor: ${JSON.stringify(data)}`, 'error');
-            alert(data.erro || "Erro ao criar pedido");
+        if (!respPedido.ok) {
+            alert(dataPedido.erro || "Erro ao criar pedido");
             return;
         }
 
-        alert(`✅ Pedido criado! ID: ${data.pedido_id} - Total: R$ ${data.valor_total.toFixed(2)} - Horário: ${data.horario || horario}`);
+        addLog(`✅ Pedido criado! ID: ${dataPedido.pedido_id}`, 'info');
 
+        // 🔥 Segundo: Registra cada produto na tabela produto_cliente com o horário
+        for (const item of produtosSelecionados) {
+            const payloadProdutoCliente = {
+                cliente: cliente,
+                produto: item.nome,
+                qtd: item.quantidade,
+                horario: horario  // 🔥 Envia o horário para a tabela produto_cliente
+            };
+
+            addLog(`📤 Registrando produto: ${item.nome} - Quantidade: ${item.quantidade} - Horário: ${horario}`, 'debug');
+
+            const respProduto = await fetch(`${BASE_URL}/produtos_cliente`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payloadProdutoCliente)
+            });
+
+            if (!respProduto.ok) {
+                const errorData = await respProduto.json();
+                addLog(`⚠️ Erro ao registrar ${item.nome}: ${errorData.erro}`, 'warning');
+            } else {
+                addLog(`✅ Produto ${item.nome} registrado com sucesso`, 'info');
+            }
+        }
+
+        alert(`✅ Pedido criado! ID: ${dataPedido.pedido_id} - Total: R$ ${dataPedido.valor_total.toFixed(2)} - Horário: ${horario}`);
+
+        // Reset
         produtosSelecionados = [];
         document.getElementById("nomeCliente").value = "";
         document.getElementById("horarioPedido").value = "";
@@ -368,8 +407,7 @@ async function criarPedido() {
         atualizarValorTotal();
 
     } catch (error) {
-        addLog(`❌ Erro de conexão: ${error.message}`, 'error');
-        alert("Erro de conexão com o servidor");
+        alert("Erro de conexão");
         console.error(error);
     }
 }
