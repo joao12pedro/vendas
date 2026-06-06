@@ -196,6 +196,7 @@ def criar_produto_cliente():
     cliente = data.get("cliente")
     produto = data.get("produto")
     qtd = data.get("qtd")
+    horario = data.get("horario")
 
     if not cliente or not produto:
         return jsonify({"erro": "Cliente e produto são obrigatórios"}), 400
@@ -206,7 +207,8 @@ def criar_produto_cliente():
         resp = supabase.table("produto_cliente").insert({
             "cliente": cliente,
             "produto": produto,
-            "qtd": qtd
+            "qtd": qtd,
+            "horario": horario
         }).execute()
 
         return jsonify({
