@@ -18,4 +18,7 @@ def home():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'index.html')
 
 if __name__ == "__main__":
+    print("Servidor rodando na porta 5000 🚀")
     app.run(debug=True)
+    
+    
