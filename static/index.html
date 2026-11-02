@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial;
-      background: #f4f4f4;
+      background: #ffffff;
       display: flex;
       height: 100vh;
       justify-content: center;
@@ -14,11 +14,39 @@
     }
 
     .login-box {
+      position: relative;
       background: white;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
       width: 300px;
+      transition: filter 0.3s, opacity 0.3s;
+    }
+
+    /* 🎭 Overlay invisível que cobre a caixa quando bloqueada */
+    .bloqueio-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: not-allowed;
+      z-index: 999;
+      border-radius: 10px;
+      /* background: rgba(255,0,0,0.1); ← Descomente para visualizar */
+    }
+
+    /* 🔒 Aplica o efeito visual cinza na caixa */
+    .login-box.bloqueado {
+      filter: grayscale(100%);
+      opacity: 0.6;
+      user-select: none;
+    }
+
+    /* 🎭 Mostra o overlay apenas quando a caixa está bloqueada */
+    .login-box.bloqueado .bloqueio-overlay {
+      display: block;
     }
 
     input, button {
@@ -53,19 +81,68 @@
       margin-top: 10px;
       font-size: 14px;
     }
+
+    /* 🚨 Mensagem de aviso ao clicar no overlay */
+    .aviso {
+      color: red;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      animation: piscar 0.5s ease-in-out;
+    }
+
+    @keyframes piscar {
+      0%   { opacity: 0; transform: scale(0.9); }
+      50%  { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
   </style>
 </head>
 <body>
-  <div class="login-box">
+  <div class="login-box bloqueado" id="loginBox">
+    <!-- 🎭 Overlay de bloqueio (fica por cima da caixa) -->
+    <div class="bloqueio-overlay" onclick="mostrarAviso()"></div>
+
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Usuário" />
     <input type="password" id="password" placeholder="Senha" />
     <button onclick="fazerLogin()">Entrar</button>
     <button class="secondary-btn" onclick="criarConta()">Criar Conta</button>
     <div class="error" id="erroLogin"></div>
+    <div class="aviso" id="avisoBloqueio" style="display: none;"></div>
   </div>
 
   <script>
+    let timerAviso = null;
+
+    // 🚨 Mostra a mensagem quando o usuário clica no overlay
+    function mostrarAviso() {
+      const aviso = document.getElementById("avisoBloqueio");
+      aviso.textContent = "⚠️ Conteúdo não disponível. Em breve nova função.";
+      aviso.style.display = "block";
+
+      // Remove a animação para poder reaplicar
+      aviso.style.animation = "none";
+      void aviso.offsetWidth; // Força reflow
+      aviso.style.animation = "piscar 0.5s ease-in-out";
+
+      // Esconde a mensagem após 3 segundos
+      if (timerAviso) clearTimeout(timerAviso);
+      timerAviso = setTimeout(function() {
+        aviso.style.display = "none";
+      }, 3000);
+    }
+
+    function desbloquear() {
+      document.getElementById("loginBox").classList.remove("bloqueado");
+      document.getElementById("avisoBloqueio").style.display = "none";
+    }
+
+    function bloquear() {
+      document.getElementById("loginBox").classList.add("bloqueado");
+    }
+
     function fazerLogin() {
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
@@ -76,19 +153,17 @@
         return;
       }
 
+      bloquear();
+
       fetch("https://vendas-svoq.onrender.com/usuario/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
       })
       .then(response => response.json().then(data => ({ status: response.status, data })))
       .then(({ status, data }) => {
         if (status === 200) {
           const id = data.usuario.id;
-
-          // Agora buscar o perfil do usuário pelo ID
           return fetch(`https://vendas-svoq.onrender.com/usuario/${id}`);
         } else {
           throw new Error(data.erro || "Erro ao fazer login");
@@ -105,11 +180,13 @@
           window.location.href = "/atendente/painel.html";
         } else {
           document.getElementById("erroLogin").textContent = "Perfil não reconhecido.";
+          desbloquear();
         }
       })
       .catch(err => {
         document.getElementById("erroLogin").textContent = err.message;
         console.error(err);
+        desbloquear();
       });
     }
 
@@ -119,4 +196,3 @@
   </script>
 </body>
 </html>
-
