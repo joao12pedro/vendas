@@ -2,24 +2,103 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Login</title>
+  <title>Acesso e Cardápio</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial;
+      font-family: 'Segoe UI', Arial, sans-serif;
       background: #ffffff;
       display: flex;
       height: 100vh;
-      justify-content: center;
+      overflow: hidden; /* Evita rolagem na página inteira */
+    }
+
+    /* ================= LAYOUT DIVIDIDO ================= */
+
+    /* Lado Esquerdo: Cardápio */
+    .cardapio-panel {
+      flex: 6; /* Ocupa 60% da tela */
+      background: #f5f7fa;
+      padding: 30px;
+      overflow-y: auto; /* Permite rolar apenas se a imagem for muito grande */
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
       align-items: center;
     }
+
+    /* Lado Direito: Login */
+    .login-panel {
+      flex: 4; /* Ocupa 40% da tela */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #ffffff;
+      padding: 20px;
+    }
+
+    /* ================= ESTILOS DO CARDÁPIO ================= */
+
+    .cardapio-panel h2 {
+      color: #1e293b;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #areaCardapio {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #previewImagem {
+      max-width: 100%;
+      max-height: 55vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: block;
+      margin: 0 auto 15px auto;
+      object-fit: contain;
+    }
+
+    .upload-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .sem-cardapio {
+      padding: 40px 20px;
+      color: #94a3b8;
+      font-size: 16px;
+    }
+
+    /* ================= ESTILOS DO LOGIN ================= */
 
     .login-box {
       position: relative;
       background: white;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-      width: 300px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 350px;
       transition: filter 0.3s, opacity 0.3s;
     }
 
@@ -34,7 +113,6 @@
       cursor: not-allowed;
       z-index: 999;
       border-radius: 10px;
-      /* background: rgba(255,0,0,0.1); ← Descomente para visualizar */
     }
 
     /* 🔒 Aplica o efeito visual cinza na caixa */
@@ -54,6 +132,8 @@
       padding: 10px;
       margin-top: 10px;
       border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
 
     button {
@@ -61,6 +141,7 @@
       color: white;
       border: none;
       cursor: pointer;
+      font-weight: bold;
     }
 
     button:hover {
@@ -79,14 +160,15 @@
     .error {
       color: red;
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 13px;
+      text-align: center;
     }
 
     /* 🚨 Mensagem de aviso ao clicar no overlay */
     .aviso {
       color: red;
       margin-top: 10px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: bold;
       text-align: center;
       animation: piscar 0.5s ease-in-out;
@@ -97,41 +179,165 @@
       50%  { opacity: 1; transform: scale(1.05); }
       100% { opacity: 1; transform: scale(1); }
     }
+
+    /* Responsividade para telas menores (celular) */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .cardapio-panel, .login-panel {
+        flex: none;
+        width: 100%;
+        padding: 20px;
+      }
+      #previewImagem {
+        max-height: 40vh;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="login-box bloqueado" id="loginBox">
-    <!-- 🎭 Overlay de bloqueio (fica por cima da caixa) -->
-    <div class="bloqueio-overlay" onclick="mostrarAviso()"></div>
 
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Usuário" />
-    <input type="password" id="password" placeholder="Senha" />
-    <button onclick="fazerLogin()">Entrar</button>
-    <button class="secondary-btn" onclick="criarConta()">Criar Conta</button>
-    <div class="error" id="erroLogin"></div>
-    <div class="aviso" id="avisoBloqueio" style="display: none;"></div>
+  <!-- ================= LADO ESQUERDO: CARDÁPIO ================= -->
+  <div class="cardapio-panel">
+    <h2>📋 Cardápio</h2>
+
+    <!-- Exibição do Último Cardápio -->
+    <div id="areaCardapio">
+      <div class="sem-cardapio">Carregando...</div>
+    </div>
+
+    <!-- Formulário de Upload -->
+    <div class="upload-section">
+      <h5 class="text-center mb-3">📤 Enviar Novo Cardápio</h5>
+      <input type="file" id="inputImagem" class="form-control" accept="image/*">
+      <div class="d-flex gap-2 mt-2">
+        <button onclick="enviarCardapio()" style="flex: 2;">Enviar Imagem</button>
+        <button onclick="carregarUltimo()" class="secondary-btn" style="flex: 1;">🔄</button>
+      </div>
+      <div id="msgUpload" class="mt-2"></div>
+    </div>
   </div>
 
+  <!-- ================= LADO DIREITO: LOGIN ================= -->
+  <div class="login-panel">
+    <div class="login-box bloqueado" id="loginBox">
+      <!-- Overlay de bloqueio -->
+      <div class="bloqueio-overlay" onclick="mostrarAviso()"></div>
+
+      <h2 class="text-center mb-4">Login</h2>
+      <input type="text" id="username" placeholder="Usuário" />
+      <input type="password" id="password" placeholder="Senha" />
+      <button onclick="fazerLogin()">Entrar</button>
+      <button class="secondary-btn" onclick="criarConta()">Criar Conta</button>
+      <div class="error" id="erroLogin"></div>
+      <div class="aviso" id="avisoBloqueio" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- ================= SCRIPTS ================= -->
   <script>
+    // URL do seu backend (Flask)
+    const API = "http://127.0.0.1:5000";
     let timerAviso = null;
 
-    // 🚨 Mostra a mensagem quando o usuário clica no overlay
+    /* ========== LOGICA DO CARDÁPIO ========== */
+
+    async function carregarUltimo() {
+      const area = document.getElementById("areaCardapio");
+      area.innerHTML = "<div class='sem-cardapio'>Carregando...</div>";
+
+      try {
+        const res = await fetch(`${API}/cardapio/ultimo`);
+        const dados = await res.json();
+
+        if (!dados.tem_cardapio) {
+          area.innerHTML = `
+            <div class='sem-cardapio'>
+              📭 Nenhum cardápio cadastrado ainda.<br>
+              <small>Envie a primeira imagem abaixo!</small>
+            </div>`;
+          return;
+        }
+
+        // 🔥 AQUI ESTÁ A CORREÇÃO: Usar apenas dados.url, pois o Supabase já manda a URL completa.
+        area.innerHTML = `
+          <p class="text-muted small mb-2">📅 Atualizado em: <strong>${dados.data_upload}</strong></p>
+          <img id="previewImagem" src="${dados.url}" alt="Último cardápio" onerror="this.src='https://placehold.co/400x300?text=Erro+ao+carregar+imagem'">
+          <div class="text-center mt-3">
+            <button class="btn btn-danger btn-sm" onclick="deletarCardapio('${dados.arquivo}')" style="width: auto;">
+              🗑 Excluir Cardápio
+            </button>
+          </div>
+        `;
+      } catch (err) {
+        area.innerHTML = "<div class='sem-cardapio text-danger'>❌ Erro ao carregar cardápio.</div>";
+        console.error(err);
+      }
+    }
+
+    async function enviarCardapio() {
+      const input = document.getElementById("inputImagem");
+      const msg = document.getElementById("msgUpload");
+
+      if (!input.files || input.files.length === 0) {
+        msg.innerHTML = "<div class='alert alert-warning py-2 mb-0'>⚠️ Selecione uma imagem.</div>";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("imagem", input.files[0]);
+
+      msg.innerHTML = "<div class='alert alert-info py-2 mb-0'>⏳ Enviando...</div>";
+
+      try {
+        const res = await fetch(`${API}/cardapio/upload`, {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.innerHTML = `<div class='alert alert-danger py-2 mb-0'>❌ ${data.erro || JSON.stringify(data)}</div>`;
+          return;
+        }
+
+        msg.innerHTML = "<div class='alert alert-success py-2 mb-0'>✅ Cardápio enviado!</div>";
+        input.value = "";
+        carregarUltimo();
+        setTimeout(() => { msg.innerHTML = ""; }, 3000);
+      } catch (err) {
+        msg.innerHTML = "<div class='alert alert-danger py-2 mb-0'>❌ Erro de conexão com o servidor.</div>";
+        console.error(err);
+      }
+    }
+
+    async function deletarCardapio(nome) {
+      if (!confirm("Tem certeza que deseja excluir este cardápio?")) return;
+
+      try {
+        await fetch(`${API}/cardapio/${nome}`, { method: "DELETE" });
+        carregarUltimo();
+      } catch (err) {
+        alert("Erro ao excluir o cardápio.");
+      }
+    }
+
+    /* ========== LOGICA DO LOGIN ========== */
+
     function mostrarAviso() {
       const aviso = document.getElementById("avisoBloqueio");
       aviso.textContent = "⚠️ Conteúdo não disponível. Em breve nova função.";
       aviso.style.display = "block";
 
-      // Remove a animação para poder reaplicar
       aviso.style.animation = "none";
-      void aviso.offsetWidth; // Força reflow
+      void aviso.offsetWidth;
       aviso.style.animation = "piscar 0.5s ease-in-out";
 
-      // Esconde a mensagem após 3 segundos
       if (timerAviso) clearTimeout(timerAviso);
-      timerAviso = setTimeout(function() {
-        aviso.style.display = "none";
-      }, 3000);
+      timerAviso = setTimeout(() => { aviso.style.display = "none"; }, 3000);
     }
 
     function desbloquear() {
@@ -154,6 +360,7 @@
       }
 
       bloquear();
+      erroLogin.textContent = "";
 
       fetch("https://vendas-svoq.onrender.com/usuario/login", {
         method: "POST",
@@ -179,13 +386,12 @@
         } else if (perfil === "atendente") {
           window.location.href = "/atendente/painel.html";
         } else {
-          document.getElementById("erroLogin").textContent = "Perfil não reconhecido.";
+          erroLogin.textContent = "Perfil não reconhecido.";
           desbloquear();
         }
       })
       .catch(err => {
-        document.getElementById("erroLogin").textContent = err.message;
-        console.error(err);
+        erroLogin.textContent = err.message;
         desbloquear();
       });
     }
@@ -193,6 +399,11 @@
     function criarConta() {
       window.location.href = "novo_usuario.html";
     }
+
+    /* ========== INICIALIZAÇÃO ========== */
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarUltimo();
+    });
   </script>
 </body>
 </html>
