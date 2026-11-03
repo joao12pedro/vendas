@@ -5,6 +5,7 @@ from flask_cors import CORS
 from pedido import pedido_bp
 from produto import produto_bp
 from cardapio import cardapio_bp
+from cliente import cliente_bp  # 🆕 IMPORTAÇÃO
 
 # 🔧 Define o caminho absoluto para a pasta static
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,8 +18,8 @@ CORS(app)
 app.register_blueprint(pedido_bp)
 app.register_blueprint(produto_bp)
 app.register_blueprint(cardapio_bp)
+app.register_blueprint(cliente_bp)  # 🆕 REGISTRO
 
-# 🚀 Rota padrão para abrir o index.html
 @app.route("/")
 def index():
     return send_from_directory(PASTA_STATIC, "index.html")
