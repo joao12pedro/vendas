@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- 🆕 Importante para responsividade -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acesso e Cardápio</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -13,8 +13,8 @@
       font-family: 'Segoe UI', Arial, sans-serif;
       background: #ffffff;
       display: flex;
-      min-height: 100vh; /* 🆕 Mudou de height para min-height */
-      overflow-x: hidden; /* 🆕 Evita rolagem horizontal indesejada */
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     /* ================= LAYOUT DIVIDIDO ================= */
@@ -99,6 +99,24 @@
       margin-bottom: 15px;
     }
 
+    /* 🆕 Relógio e Fuso Horário */
+    #relogio {
+      background: white;
+      color: #1e293b;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+    }
+    #relogio .fuso {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
     #areaCardapio {
       background: white;
       border-radius: 12px;
@@ -176,40 +194,17 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* ================= RESPONSIVIDADE (CELULAR E TABLET) ================= */
+    /* ================= RESPONSIVIDADE ================= */
     @media (max-width: 992px) {
-      body {
-        flex-direction: column; /* Empilha o login embaixo do cardápio */
-        overflow-y: auto;
-      }
-
-      .cardapio-panel, .login-panel {
-        flex: none;
-        width: 100%;
-        padding: 20px 15px; /* Reduz o espaçamento nas laterais */
-      }
-
-      .cardapio-panel {
-        border-right: none;
-        border-bottom: 1px solid #e2e8f0;
-      }
-
-      #telaNome {
-        margin-top: 10px;
-        padding: 30px 20px;
-      }
-
-      #previewImagem {
-        max-height: 45vh; /* Reduz a imagem para caber o botão de upload na tela */
-      }
-
-      .login-box {
-        margin: 20px auto;
-      }
+      body { flex-direction: column; overflow-y: auto; }
+      .cardapio-panel, .login-panel { flex: none; width: 100%; padding: 20px 15px; }
+      .cardapio-panel { border-right: none; border-bottom: 1px solid #e2e8f0; }
+      #telaNome { margin-top: 10px; padding: 30px 20px; }
+      #previewImagem { max-height: 45vh; }
+      .login-box { margin: 20px auto; }
     }
 
     @media (max-width: 400px) {
-      /* Ajustes finos para celulares muito pequenos (ex: iPhone SE) */
       #telaNome h4 { font-size: 1rem; }
       #saudacao { font-size: 1.1rem; }
       .cardapio-panel, .login-panel { padding: 15px 10px; }
@@ -238,6 +233,11 @@
 
       <!-- Mensagem de Boas-Vindas -->
       <div id="saudacao"></div>
+
+      <!-- 🆕 Relógio e Fuso Horário -->
+      <div id="relogio">
+        Carregando data e hora...
+      </div>
 
       <h2>📋 Cardápio</h2>
 
@@ -275,11 +275,33 @@
 
   <!-- ================= SCRIPTS ================= -->
   <script>
-    const API = "https://vendas-svoq.onrender.com";
+    const API = "https://vendas-svoq.onrender.com/"; // 🆕 Vazio para funcionar no celular e na web
     let timerAviso = null;
 
-    /* ========== GERENCIAMENTO DE DISPOSITIVO (NOME) ========== */
+    /* ========== RELÓGIO E FUSO HORÁRIO ========== */
+    function atualizarRelogio() {
+      const agora = new Date();
 
+      // Data e hora do dispositivo
+      const data = agora.toLocaleDateString('pt-BR');
+      const hora = agora.toLocaleTimeString('pt-BR');
+
+      // Fuso horário (Ex: America/Sao_Paulo)
+      const fusoHorario = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Calcula o offset UTC
+      const offsetMinutos = agora.getTimezoneOffset();
+      const offsetHoras = Math.abs(offsetMinutos / 60);
+      const sinal = offsetMinutos > 0 ? '-' : '+';
+      const offsetFormatado = `UTC${sinal}${String(Math.floor(offsetHoras)).padStart(2, '0')}:${String(Math.abs(offsetMinutos % 60)).padStart(2, '0')}`;
+
+      document.getElementById('relogio').innerHTML = `
+        📅 <strong>${data}</strong> &nbsp;|&nbsp; ⏰ <strong>${hora}</strong> <br>
+        <span class="fuso">🌍 Fuso: ${fusoHorario.replace('_', ' ')} (${offsetFormatado})</span>
+      `;
+    }
+
+    /* ========== GERENCIAMENTO DE DISPOSITIVO (NOME) ========== */
     function verificarDispositivo() {
       const nomeSalvo = localStorage.getItem("device_cliente_nome");
 
@@ -476,7 +498,7 @@
           erroLogin.textContent = "Perfil não reconhecido.";
           desbloquear();
         }
-      })
+      })"
       .catch(err => {
         erroLogin.textContent = err.message;
         desbloquear();
@@ -488,6 +510,10 @@
     /* ========== INICIALIZAÇÃO ========== */
     document.addEventListener("DOMContentLoaded", () => {
       verificarDispositivo();
+
+      // 🆕 Inicia o relógio e atualiza a cada 1 segundo (1000 ms)
+      atualizarRelogio();
+      setInterval(atualizarRelogio, 1000);
     });
   </script>
 </body>
