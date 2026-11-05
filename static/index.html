@@ -234,7 +234,7 @@
       <!-- Mensagem de Boas-Vindas -->
       <div id="saudacao"></div>
 
-      <!-- 🆕 Relógio e Fuso Horário -->
+      <!-- Relógio e Fuso Horário -->
       <div id="relogio">
         Carregando data e hora...
       </div>
@@ -275,7 +275,7 @@
 
   <!-- ================= SCRIPTS ================= -->
   <script>
-    const API = ""; // 🆕 Vazio para funcionar no celular e na web
+    const API = "";
     let timerAviso = null;
 
     /* ========== RELÓGIO E FUSO HORÁRIO ========== */
@@ -386,8 +386,8 @@
           return;
         }
 
+        // 🔥 A linha com o "Atualizado em:" foi removida daqui
         area.innerHTML = `
-          <p class="text-muted small mb-2">📅 Atualizado em: <strong>${dados.data_upload}</strong></p>
           <img id="previewImagem" src="${dados.url}" alt="Último cardápio" onerror="this.src='https://placehold.co/400x300?text=Erro+ao+carregar+imagem'">
           <div class="text-center mt-3">
             <button class="btn btn-danger btn-sm" onclick="deletarCardapio('${dados.arquivo}')" style="width: auto;">🗑 Excluir Cardápio</button>
@@ -511,7 +511,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       verificarDispositivo();
 
-      // 🆕 Inicia o relógio e atualiza a cada 1 segundo (1000 ms)
+      // Inicia o relógio
       atualizarRelogio();
       setInterval(atualizarRelogio, 1000);
     });
