@@ -275,7 +275,7 @@
 
   <!-- ================= SCRIPTS ================= -->
   <script>
-    const API = "https://vendas-svoq.onrender.com/"; // 🆕 Vazio para funcionar no celular e na web
+    const API = ""; // 🆕 Vazio para funcionar no celular e na web
     let timerAviso = null;
 
     /* ========== RELÓGIO E FUSO HORÁRIO ========== */
@@ -498,7 +498,7 @@
           erroLogin.textContent = "Perfil não reconhecido.";
           desbloquear();
         }
-      })"
+      })
       .catch(err => {
         erroLogin.textContent = err.message;
         desbloquear();
